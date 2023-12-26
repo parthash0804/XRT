@@ -33,7 +33,10 @@ XrtIP
   , deadlockDiagnosis(std::string())
   , index(-1)
 {
-  size_t pos = fullname.find(':');
+  std::shared_ptr<xrt_core::device> device = xrt_core::get_userpf_device(xdpDevice->getRawDevice());
+  xrtIP = std::make_unique<xrt::ip>(xrt::device{device}, device->get_xclbin_uuid(), fullname);
+
+  size_t pos = fullname.find(':');  
   kernelName = fullname.substr(0, pos);
 
   // Find register info for our kernel
@@ -57,7 +60,9 @@ XrtIP
 int XrtIP::
 read(uint32_t offset, uint32_t* data)
 {
-  return xdpDevice->readXrtIP(index, offset, data);
+  uint32_t registerVal = xrtIP->read_register(offset);
+  data = &registerVal;
+  return 0;
 }
 
 std::string& XrtIP::
