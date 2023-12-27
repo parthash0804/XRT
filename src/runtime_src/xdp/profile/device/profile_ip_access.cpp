@@ -152,8 +152,8 @@ int ProfileIP::unmgdRead(unsigned flags, void *buf, size_t count, uint64_t offse
         return -1;
     }
     uint64_t absolute_offset = ip_base_address + offset;
-    device->unmgdRead(flags, buf, count, absolute_offset);
-    // warning ?
+    auto core_device = xrt_core::get_userpf_device(device->getRawDevice());
+    core_device->unmgd_pread(buf, count, absolute_offset); 
     return 0;
 }
 
