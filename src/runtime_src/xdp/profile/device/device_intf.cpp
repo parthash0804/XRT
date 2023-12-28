@@ -552,8 +552,18 @@ void DeviceIntf::readDebugIPlayout() {
     // status should not have been called
     return;
   }
-
-  uint32_t liveProcessesOnDevice = mDevice->getNumLiveProcesses();
+  uint32_t liveProcessesOnDevice = 0;
+  auto core_device = xrt_core::get_userpf_device(mDevice->getRawDevice());
+  try {
+    liveProcessesOnDevice = xrt_core::device_query<xrt_core::query::num_live_processes>(core_device);
+  }
+  catch (const xrt_core::query::no_such_key&) {
+    //query is not implemented
+    liveProcessesOnDevice = 0;
+  }
+  catch (const std::exception&) {
+    // error retrieving information
+  }
 
   if (liveProcessesOnDevice > 1) {
     /* More than 1 process on device. Device Profiling for multi-process not
