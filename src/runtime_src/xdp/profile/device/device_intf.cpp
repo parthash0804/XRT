@@ -1241,7 +1241,17 @@ void DeviceIntf::setHostMaxBwWrite() {
 }
 
 void DeviceIntf::setKernelMaxBwRead() {
-  mKernelMaxReadBW = mDevice->getKernelMaxBwRead();
+  auto core_device = xrt_core::get_userpf_device(mDevice->getRawDevice());
+  try {
+    mKernelMaxReadBW = xrt_core::device_query<xrt_core::query::kernel_max_bandwidth_mbps>(core_device,true);
+  }
+  catch (const xrt_core::query::no_such_key&) {
+    //query is not implemented
+    mKernelMaxReadBW = 0.0;
+  }
+  catch (const std::exception&) {
+    // error retrieving information
+  }
 }
 
 void DeviceIntf::setKernelMaxBwWrite() {
