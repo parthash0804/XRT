@@ -30,6 +30,7 @@
 
 #include "core/common/message.h"
 #include "core/common/system.h"
+#include "core/common/query_requests.h"
 #include "core/include/xdp/fifo.h"
 
 #include "xdp/profile/device/aieTraceS2MM.h"
@@ -1212,7 +1213,17 @@ uint8_t DeviceIntf::getAIETs2mmMemIndex(uint64_t index) {
 }
 
 void DeviceIntf::setHostMaxBwRead() {
-  mHostMaxReadBW = mDevice->getHostMaxBwRead();
+  auto core_device = xrt_core::get_userpf_device(mDevice->getRawDevice());
+  try {
+    mHostMaxReadBW = xrt_core::device_query<xrt_core::query::host_max_bandwidth_mbps>(core_device,true);
+  }
+  catch (const xrt_core::query::no_such_key&) {
+    //query is not implemented
+    mHostMaxReadBW = 0.0;
+  }
+  catch (const std::exception&) {
+    // error retrieving information
+  }
 }
 
 void DeviceIntf::setHostMaxBwWrite() {
