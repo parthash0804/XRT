@@ -24,6 +24,9 @@
 #include <vector>
 #include "profile_ip_access.h"
 
+#include "core/common/system.h"
+#include "core/common/query_requests.h"
+
 namespace xdp {
 
 /**

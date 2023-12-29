@@ -76,7 +76,18 @@ uint32_t TraceFifoFull::readTrace(uint32_t*& traceData, uint32_t nSamples)
   //  in the FIFO.  So the actual number of samples will be different
   //  from the already calculated "numSamples"
 
-  getDevice()->getTraceBufferInfo(numSamples, traceSamples /*actual no. of samples for specific device*/, traceBufSz);
+  auto core_device = xrt_core::get_userpf_device(getDevice()->getRawDevice());
+  try {
+    auto traceBufInfo = xrt_core::device_query<xrt_core::query::trace_buffer_info>(core_device, numSamples);
+    traceSamples = traceBufInfo.samples;
+    traceBufSz = traceBufInfo.buf_size;
+  }
+  catch (const xrt_core::query::no_such_key&) {
+    //query is not implemented
+  }
+  catch (const std::exception&) {
+    // error retrieving information
+  }
 
   traceData = new uint32_t[traceBufSz];
   uint32_t wordsPerSample = 1;
