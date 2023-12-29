@@ -545,7 +545,18 @@ void DeviceIntf::readDebugIPlayout() {
     return;
 
 #ifndef _WIN32
-  std::string path = mDevice->getDebugIPlayoutPath();
+  std::string path = "";
+  auto core_device = xrt_core::get_userpf_device(mDevice->getRawDevice());
+  try {
+    path = xrt_core::device_query<xrt_core::query::debug_ip_layout_path>(core_device, 512);
+  }
+  catch (const xrt_core::query::no_such_key&) {
+    //query is not implemented
+    path = "";
+  }
+  catch (const std::exception&) {
+    // error retrieving information
+  }
 
   if (path.empty()) {
     // error ? : for HW_emu this will be empty for now ; but as of current
@@ -553,7 +564,6 @@ void DeviceIntf::readDebugIPlayout() {
     return;
   }
   uint32_t liveProcessesOnDevice = 0;
-  auto core_device = xrt_core::get_userpf_device(mDevice->getRawDevice());
   try {
     liveProcessesOnDevice = xrt_core::device_query<xrt_core::query::num_live_processes>(core_device);
   }
