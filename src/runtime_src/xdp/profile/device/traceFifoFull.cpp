@@ -89,9 +89,19 @@ uint32_t TraceFifoFull::readTrace(uint32_t*& traceData, uint32_t nSamples)
     // error retrieving information
   }
 
-  traceData = new uint32_t[traceBufSz];
   uint32_t wordsPerSample = 1;
-  getDevice()->readTraceData(traceData, traceBufSz, numSamples/* use numSamples */, getBaseAddress(), wordsPerSample);
+  std::vector<uint32_t> vTraceData(traceBufSz);
+  xrt_core::query::read_trace_data::args traceDataArgs = {traceBufSz, traceSamples, getBaseAddress(), wordsPerSample};
+  try {
+    vTraceData = xrt_core::device_query<xrt_core::query::read_trace_data>(core_device, traceDataArgs);
+  }
+  catch (const xrt_core::query::no_such_key&) {
+    //query is not implemented
+  }
+  catch (const std::exception&) {
+    // error retrieving information
+  }
+  traceData = vTraceData.data();
 
   return traceSamples * sizeof(uint64_t) ; // Actual number of bytes used
 }
