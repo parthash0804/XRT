@@ -605,17 +605,18 @@ void DeviceIntf::readDebugIPlayout() {
   if (ifs.gcount() > 0) {
     map = (debug_ip_layout *)(buffer);
 #else
-  size_t sz1 = 0, sectionSz = 0;
-  // Get the size of full debug_ip_layout
-  mDevice->getDebugIpLayout(nullptr, sz1, &sectionSz);
-
-  if (0 == sectionSz) {
-    return;
-  }
-
   // Allocate buffer to retrieve debug_ip_layout information from loaded xclbin
-  std::vector<char> buffer(sectionSz);
-  mDevice->getDebugIpLayout(buffer.data(), sectionSz, &sz1);
+  std::vector<char> buffer;
+  auto core_device = xrt_core::get_userpf_device(mDevice->getRawDevice());
+  try {
+    buffer = xrt_core::device_query<xrt_core::query::debug_ip_layout_raw>(core_device);
+  }
+  catch (const xrt_core::query::no_such_key&) {
+    //query is not implemented
+  }
+  catch (const std::exception&) {
+    // error retrieving information
+  }
   auto map = reinterpret_cast<debug_ip_layout *>(buffer.data());
 #endif
 
