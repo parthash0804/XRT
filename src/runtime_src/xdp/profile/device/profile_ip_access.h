@@ -26,9 +26,6 @@
 #include "xclbin.h"
 #include "xdp_base_device.h"
 
-#include "core/common/system.h"
-#include "core/common/ishim.h"
-
 #define PROFILE_IP_SZ 0x1000
 #define TRACE_FIFO_LITE_SZ 0x2000
 
@@ -156,7 +153,7 @@ private:
     bool  exclusive;          /* flag indicating if the IP has exclusive access */
     uint64_t ip_index;        /* the index of the IP in debug_ip_layout */
     uint64_t ip_base_address; /* Base address of the Monitor IP as given in debug_ip_layout ; Used with xclRead/xclWrite/xclUnmgdPread */
-    std::string ip_name;      /* the string name of the IP for better debuggability */
+    std::string ip_name;      /* the string name of the IP for better debuggability */ 
 
 protected:
 
