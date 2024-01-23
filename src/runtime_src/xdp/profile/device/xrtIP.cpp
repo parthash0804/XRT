@@ -36,25 +36,25 @@ XrtIP
   std::shared_ptr<xrt_core::device> device = xrt_core::get_userpf_device(xdpDevice->getRawDevice());
   xrtIP = std::make_unique<xrt::ip>(xrt::device{device}, device->get_xclbin_uuid(), fullname);
 
-  size_t pos = fullname.find(':');  
-  kernelName = fullname.substr(0, pos);
+//  size_t pos = fullname.find(':');  
+//  kernelName = fullname.substr(0, pos);
 
   // Find register info for our kernel
-  for (auto& pair : ip_metadata_section->kernel_infos) {
-    auto& kname = pair.first;
-    if (kname.find(kernelName) != std::string ::npos) {
-      regInfo = pair.second;
-      break;
-    }
-  }
+//  for (auto& pair : ip_metadata_section->kernel_infos) {
+//    auto& kname = pair.first;
+//    if (kname.find(kernelName) != std::string ::npos) {
+//      regInfo = pair.second;
+//      break;
+//    }
+//  }
 
-  if (regInfo.empty())
-    return;
+//  if (regInfo.empty())
+//    return;
 
   // Try to enable register access
-  uint32_t low  = regInfo.begin()->first;
-  uint32_t high = regInfo.rbegin()->first + REGSIZE_BYTES;
-  index = xdpDevice->initXrtIP(fullname.c_str(), low, (high - low));
+//  uint32_t low  = regInfo.begin()->first;
+//  uint32_t high = regInfo.rbegin()->first + REGSIZE_BYTES;
+//  index = xdpDevice->initXrtIP(fullname.c_str(), low, (high - low));
 }
 
 int XrtIP::
