@@ -146,8 +146,12 @@ int ProfileIP::write(uint64_t offset, size_t size, void* data) {
     }
     uint64_t absolute_offset = ip_base_address + offset;
 
-    auto core_device = xrt_core::get_userpf_device(device->getRawDevice());
-    core_device->xwrite(XCL_ADDR_SPACE_DEVICE_PERFMON, absolute_offset, data, size);
+    int write_size = device->write(XCL_ADDR_SPACE_DEVICE_PERFMON, absolute_offset, data, size);
+    // HW Emulation xclWrite will always return -1 even on success
+    if (write_size < 0 && getFlowMode() == HW) {
+        showWarning("xclWrite failed");
+        return write_size;
+    }
     return 0;
 }
 
