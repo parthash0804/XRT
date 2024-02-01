@@ -33,23 +33,31 @@ XrtIP
   , deadlockDiagnosis(std::string())
   , index(-1)
 {
-  std::shared_ptr<xrt_core::device> device = xrt_core::get_userpf_device(xdpDevice->getRawDevice());
-  xrtIP = std::make_unique<xrt::ip>(xrt::device{device}, device->get_xclbin_uuid(), fullname);
-
-//  size_t pos = fullname.find(':');  
-//  kernelName = fullname.substr(0, pos);
+  size_t pos = fullname.find(':');  
+  kernelName = fullname.substr(0, pos);
 
   // Find register info for our kernel
-//  for (auto& pair : ip_metadata_section->kernel_infos) {
-//    auto& kname = pair.first;
-//    if (kname.find(kernelName) != std::string ::npos) {
-//      regInfo = pair.second;
-//      break;
-//    }
-//  }
+  for (auto& pair : ip_metadata_section->kernel_infos) {
+    auto& kname = pair.first;
+    if (kname.find(kernelName) != std::string ::npos) {
+      regInfo = pair.second;
+      break;
+    }
+  }
 
-//  if (regInfo.empty())
-//    return;
+  if (regInfo.empty())
+    return;
+
+  xrt::hw_context hw_ctx;
+  std::shared_ptr<xrt_core::device> coreDevice = xrt_core::get_userpf_device(xdpDevice->getRawDevice());
+
+  try{
+    hw_ctx = xrt::hw_context{xrt::device{coreDevice}, coreDevice->get_xclbin_uuid()};
+    xrtIP = std::make_unique<xrt::ip>(hw_ctx, fullname);
+  }
+  catch (const std::exception& ex){
+    std::cout<<ex.what()<<std::endl;
+  }
 
   // Try to enable register access
 //  uint32_t low  = regInfo.begin()->first;
