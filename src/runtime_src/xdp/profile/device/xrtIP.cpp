@@ -56,6 +56,7 @@ XrtIP
     xrtIP = std::make_unique<xrt::ip>(hw_ctx, fullname);
   }
   catch (const std::exception& ex){
+    index = -1;
     std::cout<<ex.what()<<std::endl;
   }
 
