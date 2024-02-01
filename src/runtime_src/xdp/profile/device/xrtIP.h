@@ -24,6 +24,7 @@
 
 #include "core/common/system.h"
 #include "core/include/experimental/xrt_ip.h"
+#include "core/include/xrt/xrt_hw_context.h"
 
 #include "xdp/profile/database/static_info/pl_constructs.h"
 #include "xdp_base_device.h"
