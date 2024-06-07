@@ -178,12 +178,18 @@ namespace xdp {
     uint64_t nBytes = bd.usedSz - bd.offset;
 
     xrt_bos[index].sync(XCL_BO_SYNC_BO_FROM_DEVICE, nBytes, bd.offset);
-    auto in_bo_map = xrt_bos[index].map<uint32_t*>();
+    auto in_bo_map = xrt_bos[index].map<uint32_t*>() + bd.offset;
 
     if (!in_bo_map)
       return 0;
 
     nBytes = searchWrittenBytes((void*)in_bo_map, bufAllocSz);
+
+    // check for full buffer
+    if (bd.offset + nBytes >= bufAllocSz) {
+      bd.isFull = true;
+      bd.offloadDone = true;
+    }
 
     // Log nBytes of trace
     traceLogger->addAIETraceData(index, (void*)in_bo_map, nBytes, true);
@@ -241,19 +247,19 @@ namespace xdp {
 
   bool AIETraceOffload::keepOffloading() 
   { 
-    std::lock_guard<std::mutex> lock(statusLock);
+    // std::lock_guard<std::mutex> lock(statusLock);
     return offloadStatus == AIEOffloadThreadStatus::RUNNING;
   }
 
   void AIETraceOffload::stopOffload() 
   {
-    std::lock_guard<std::mutex> lock(statusLock);
+    // std::lock_guard<std::mutex> lock(statusLock);
     offloadStatus = AIEOffloadThreadStatus::STOPPING;
   }
 
   void AIETraceOffload::offloadFinished() 
   {
-    std::lock_guard<std::mutex> lock(statusLock);
+    // std::lock_guard<std::mutex> lock(statusLock);
     offloadStatus = AIEOffloadThreadStatus::STOPPED;
   }
 

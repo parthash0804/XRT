@@ -111,7 +111,7 @@ public:
     inline void setOffloadIntervalUs(uint64_t v) { offloadIntervalUs = v; }
 
     AIEOffloadThreadStatus getOffloadStatus() {
-      std::lock_guard<std::mutex> lock(statusLock);
+      // std::lock_guard<std::mutex> lock(statusLock);
       return offloadStatus;
     };
 
