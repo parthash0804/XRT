@@ -114,10 +114,12 @@ namespace xdp {
   void XDPPlugin::writeContinuous(unsigned int interval, std::string type, bool openNewFiles)
   {
     is_write_thread_active = true;
-
+    std::cout<<"******************Inside writeContinuous******************\n";
     while (writeCondWaitFor(std::chrono::seconds(interval)))
+    {
+      std::cout<<"******************Inside while loop for file write thread******************\n";
       trySafeWrite(type, openNewFiles);
-
+    }
     // Do a final write
     mtx_writer_list.lock();
     for (auto w : writers)
@@ -129,11 +131,14 @@ namespace xdp {
   {
     if (is_write_thread_active)
       return;
+    std::cout<<"******************Inside startWriteThread******************\n";
     write_thread = std::thread(&XDPPlugin::writeContinuous, this, interval, type, openNewFiles);
   }
 
   void XDPPlugin::endWrite()
   {
+    std::cout<<"******************Inside endWrite******************\n";
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     if (is_write_thread_active) {
       // Ask writer thread to quit
       {
@@ -152,7 +157,7 @@ namespace xdp {
   {
     if (type.empty() && openNewFiles)
       return;
-
+    std::cout<<"******************Inside trySafeWrite******************\n";
     // If a writer is already writing, then don't do anything
     if (mtx_writer_list.try_lock()) {
       for (auto w : writers) {

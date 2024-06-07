@@ -194,12 +194,19 @@ namespace xdp {
    * Implement these later for continuous offload
    */
 
-  AIETraceOffload::~AIETraceOffload() {}
+  AIETraceOffload::~AIETraceOffload() 
+  {
+    if (offloadStatus == AIEOffloadThreadStatus::RUNNING)
+      stopOffload();
+
+    if (offloadThread.joinable())
+      offloadThread.join();
+  }
 
   void AIETraceOffload::startOffload() 
   {
     if (offloadStatus == AIEOffloadThreadStatus::RUNNING)
-    return;
+      return;
 
     std::lock_guard<std::mutex> lock(statusLock);
     offloadStatus = AIEOffloadThreadStatus::RUNNING;
@@ -240,10 +247,8 @@ namespace xdp {
 
   void AIETraceOffload::stopOffload() 
   {
-    // std::lock_guard<std::mutex> lock(statusLock);
+    std::lock_guard<std::mutex> lock(statusLock);
     offloadStatus = AIEOffloadThreadStatus::STOPPING;
-    offloadThread.join();
-    // offloadStatus = AIEOffloadThreadStatus::STOPPED;
   }
 
   void AIETraceOffload::offloadFinished() 
@@ -252,7 +257,17 @@ namespace xdp {
     offloadStatus = AIEOffloadThreadStatus::STOPPED;
   }
 
-  void AIETraceOffload::endReadTrace() {}
+  void AIETraceOffload::endReadTrace() 
+  {
+    for (uint64_t i = 0; i < numStream ; ++i) {
+      if (!buffers[i].bufId)
+        continue;
+
+    deviceIntf->freeTraceBuf(buffers[i].bufId);
+    buffers[i].bufId = 0;
+    }
+    bufferInitialized = false;
+  }
 
   uint64_t AIETraceOffload::searchWrittenBytes(void* buf, uint64_t bytes)
   {

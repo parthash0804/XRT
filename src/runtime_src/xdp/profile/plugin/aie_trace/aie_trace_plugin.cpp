@@ -370,11 +370,10 @@ void AieTracePluginUnified::flushOffloader(
     const std::unique_ptr<AIETraceOffload> &offloader, bool warn) {
   if (offloader->continuousTrace()) {
     offloader->stopOffload();
-
-    // std::this_thread::sleep_for(std::chrono::seconds(3));
-    // offloader->offloadFinished();
-
-    while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
+    offloader->readTrace(true);
+    offloader->endReadTrace();
+    offloader->offloadFinished();
+    // while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
       ;
   } else {
     offloader->readTrace(true);
