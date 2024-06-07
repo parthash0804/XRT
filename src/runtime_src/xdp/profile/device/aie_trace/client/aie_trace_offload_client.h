@@ -84,13 +84,14 @@ class AIETraceOffload
     void endReadTrace();
     void startOffload();
     void stopOffload();
+    void offloadFinished();
 
     inline AIETraceLogger* getAIETraceLogger() { return traceLogger; }
     inline void setContinuousTrace() { traceContinuous = true; }
     inline bool continuousTrace()    { return traceContinuous; }
     inline void setOffloadIntervalUs(uint64_t v) { offloadIntervalUs = v; }
 
-    inline AIEOffloadThreadStatus getOffloadStatus() {
+    AIEOffloadThreadStatus getOffloadStatus() {
       std::lock_guard<std::mutex> lock(statusLock);
       return offloadStatus;
     };
@@ -134,8 +135,9 @@ class AIETraceOffload
 
   private:
     void readTraceGMIO(bool final);
+    void continuousOffload();
     bool keepOffloading();
-    void offloadFinished();
+    // void offloadFinished();
     uint64_t syncAndLog(uint64_t index);
     std::function<void(bool)> mReadTrace;
     uint64_t searchWrittenBytes(void * buf, uint64_t bytes);

@@ -110,7 +110,7 @@ public:
     inline bool continuousTrace()    { return traceContinuous; }
     inline void setOffloadIntervalUs(uint64_t v) { offloadIntervalUs = v; }
 
-    inline AIEOffloadThreadStatus getOffloadStatus() {
+    AIEOffloadThreadStatus getOffloadStatus() {
       std::lock_guard<std::mutex> lock(statusLock);
       return offloadStatus;
     };
