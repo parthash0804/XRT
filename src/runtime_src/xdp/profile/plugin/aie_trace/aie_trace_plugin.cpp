@@ -67,10 +67,19 @@ AieTracePluginUnified::~AieTracePluginUnified() {
 
   // Stop thread to write timestamps
   endPoll();
+  std::cout<<"***************Before Joining***************\n";
+  if(offloadThread.joinable())
+  {
+    std::cout<<"***************Joining offloadThread***************\n";
+    offloadThread.join();
+  }
+    
+  
+  std::cout<<"***************After Joining***************\n";
 
   if (VPDatabase::alive()) {
     try {
-      writeAll(false);
+      // writeAll(false);
     } catch (...) {
     }
 
@@ -80,6 +89,22 @@ AieTracePluginUnified::~AieTracePluginUnified() {
   // If the database is dead, then we must have already forced a
   // write at the database destructor so we can just move on
   AieTracePluginUnified::live = false;
+}
+
+void AieTracePluginUnified::flushTrace()
+{
+  std::cout<<"***************Before 10 seconds***************\n";
+  try{
+    // for(int i=0;i<1e10;i++){}
+    Sleep(10000);
+  }
+  catch(...)
+  {
+    std::cout<<"Exception in sleep\n";
+  }
+  std::cout<<"***************After 10 seconds***************\n";
+  writeAll(false);
+  std::cout<<"***************After writeAll***************\n";
 }
 
 uint64_t AieTracePluginUnified::getDeviceIDFromHandle(void *handle) {
@@ -231,7 +256,7 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   if (AIEData.metadata->getContinuousTrace()) {
     xrt_core::message::send(severity_level::debug, "XRT", 
                             "Periodic offload is not supported on this platform.");
-    AIEData.metadata->resetContinuousTrace();
+    // AIEData.metadata->resetContinuousTrace();
   }
 #else
   if (AIEData.metadata->getContinuousTrace())
@@ -346,12 +371,15 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   AIEData.implementation->updateDevice();
 
   // Continuous Trace Offload is supported only for PLIO flow
-  if (AIEData.metadata->getContinuousTrace())
-    offloader->startOffload();
+  // if (AIEData.metadata->getContinuousTrace())
+  //   offloader->startOffload();
+  offloadThread = std::thread(&AieTracePluginUnified::flushTrace, this);
 
   xrt_core::message::send(severity_level::info, "XRT",
                           "Finished AIE Trace updateAIEDevice.");
 }
+
+
 
 void AieTracePluginUnified::pollAIETimers(uint64_t index, void *handle) {
   auto it = handleToAIEData.find(handle);

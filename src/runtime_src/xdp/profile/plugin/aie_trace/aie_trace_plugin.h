@@ -18,6 +18,7 @@
 #define AIE_TRACE_PLUGIN_H
 
 #include <cstdint>
+#include <windows.h>
 
 #include "aie_trace_metadata.h"
 #include "xdp/profile/database/events/creator/aie_trace_data_logger.h"
@@ -42,6 +43,7 @@ public:
   virtual void writeAll(bool openNewFiles) override;
   void endPollforDevice(void *handle);
   static bool alive();
+  void flushTrace();
 
 private:
   uint64_t getDeviceIDFromHandle(void *handle);
@@ -52,6 +54,7 @@ private:
 
 private:
   static bool live;
+  std::thread offloadThread;
   struct AIEData {
     uint64_t deviceID;
     bool valid;
