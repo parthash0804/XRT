@@ -39,7 +39,7 @@ namespace xdp {
     static unsigned int trace_file_dump_int_s;
     static bool trace_int_cached;
 
-    std::atomic<bool> is_write_thread_active;
+    std::atomic<bool> is_write_thread_active = false;
     std::thread write_thread;
     // Trace dump thread control
     bool stop_writer_thread = false;

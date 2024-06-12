@@ -144,6 +144,7 @@ namespace xdp {
 
   void AIETraceOffload::readTraceGMIO(bool /*final*/)
   {
+    std::cout<<"*******************readTraceGMIO*******************\n";
     for (int index = 0; index < numStream; index++) {
       syncAndLog(index);
     }
@@ -151,14 +152,15 @@ namespace xdp {
 
   uint64_t AIETraceOffload::syncAndLog(uint64_t index)
   {
+    std::cout<<"*******************syncAndLog*******************\n";
     xrt_bos[index].sync(XCL_BO_SYNC_BO_FROM_DEVICE);
     auto in_bo_map = xrt_bos[index].map<uint32_t*>();
 
     if (!in_bo_map)
       return 0;
-
+    std::cout<<"*******************in_bo_map*******************\n";
     uint64_t nBytes = searchWrittenBytes((void*)in_bo_map, bufAllocSz);
-
+    std::cout<<"*******************nBytes: "<<nBytes<<"\n";
     // Log nBytes of trace
     traceLogger->addAIETraceData(index, (void*)in_bo_map, nBytes, true);
     return xrt_bos[index].size();
@@ -182,6 +184,7 @@ namespace xdp {
 
   uint64_t AIETraceOffload::searchWrittenBytes(void* buf, uint64_t bytes)
   {
+    std::cout<<"*******************searchWrittenBytes*******************\n";
     /*
      * Look For trace boundary using binary search.
      * Use Dword to be safe

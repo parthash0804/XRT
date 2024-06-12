@@ -192,14 +192,14 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
     return;
   }
 
-  if (AIEData.metadata->getRuntimeMetrics()) {
-    std::string configFile = "aie_event_runtime_config.json";
-    VPWriter *writer = new AieTraceConfigWriter(configFile.c_str(), deviceID);
-    writers.push_back(writer);
-    (db->getStaticInfo())
-        .addOpenedFile(writer->getcurrentFileName(),
-                       "AIE_EVENT_RUNTIME_CONFIG");
-  }
+  // if (AIEData.metadata->getRuntimeMetrics()) {
+  //   std::string configFile = "aie_event_runtime_config.json";
+  //   VPWriter *writer = new AieTraceConfigWriter(configFile.c_str(), deviceID);
+  //   writers.push_back(writer);
+  //   (db->getStaticInfo())
+  //       .addOpenedFile(writer->getcurrentFileName(),
+  //                      "AIE_EVENT_RUNTIME_CONFIG");
+  // }
 
   // Add writer for every stream
   for (uint64_t n = 0; n < AIEData.metadata->getNumStreams(); ++n) {
@@ -228,11 +228,9 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   bool isPLIO = (db->getStaticInfo()).getNumTracePLIO(deviceID) ? true : false;
 
 #ifdef XDP_CLIENT_BUILD
-  if (AIEData.metadata->getContinuousTrace()) {
-    xrt_core::message::send(severity_level::debug, "XRT", 
-                            "Periodic offload is not supported on this platform.");
-    AIEData.metadata->resetContinuousTrace();
-  }
+  if (AIEData.metadata->getContinuousTrace())
+    XDPPlugin::startWriteThread(AIEData.metadata->getFileDumpIntS(),
+                                "AIE_EVENT_TRACE", false);
 #else
   if (AIEData.metadata->getContinuousTrace())
     XDPPlugin::startWriteThread(AIEData.metadata->getFileDumpIntS(),
@@ -370,15 +368,15 @@ void AieTracePluginUnified::pollAIETimers(uint64_t index, void *handle) {
 
 void AieTracePluginUnified::flushOffloader(
     const std::unique_ptr<AIETraceOffload> &offloader, bool warn) {
-  if (offloader->continuousTrace()) {
-    offloader->stopOffload();
+  // if (offloader->continuousTrace()) {
+  //   offloader->stopOffload();
 
-    while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
-      ;
-  } else {
+  //   while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
+  //     ;
+  // } else {
     offloader->readTrace(true);
     offloader->endReadTrace();
-  }
+  // }
 
   if (warn && offloader->isTraceBufferFull())
     xrt_core::message::send(severity_level::warning, "XRT",

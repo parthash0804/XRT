@@ -111,18 +111,25 @@ namespace xdp {
     */
   }
 
-  void XDPPlugin::writeContinuous(unsigned int interval, std::string type, bool openNewFiles)
+  void XDPPlugin::writeContinuous(unsigned int /*interval*/, std::string /*type*/, bool /*openNewFiles*/)
   {
-    is_write_thread_active = true;
-
-    while (writeCondWaitFor(std::chrono::seconds(interval)))
-      trySafeWrite(type, openNewFiles);
-
-    // Do a final write
-    mtx_writer_list.lock();
-    for (auto w : writers)
-      w->write(false);
-    mtx_writer_list.unlock();
+    // is_write_thread_active = true;
+    std::cout<<"********** XDPPlugin::writeContinuous **********\n";
+    std::this_thread::sleep_for(std::chrono::seconds(20));
+    std::cout<<"**************After sleep**************"<<std::endl;
+    
+    // std::cout << " is_write_thread_active " << is_write_thread_active << std::endl;
+    // while (writeCondWaitFor(std::chrono::microseconds(interval)))
+    // {
+    //   std::cout<<"*****************Inside while loop for file write*****************\n";
+    //   trySafeWrite(type, openNewFiles);
+    // }
+    // std::cout<<"********** Exiting write thread **********\n";
+    // // Do a final write
+    // mtx_writer_list.lock();
+    // for (auto w : writers)
+    //   w->write(false);
+    // mtx_writer_list.unlock();
   }
 
   void XDPPlugin::startWriteThread(unsigned int interval, std::string type, bool openNewFiles)
@@ -130,21 +137,40 @@ namespace xdp {
     if (is_write_thread_active)
       return;
     write_thread = std::thread(&XDPPlugin::writeContinuous, this, interval, type, openNewFiles);
+    std::cout << " Write thread created " << std::endl;
   }
 
   void XDPPlugin::endWrite()
   {
+        std::cout << " EndWrite from " << std::this_thread::get_id() << std::endl;
+    std::cout << " is_write_thread_active from endWrite " << is_write_thread_active << std::endl;
     if (is_write_thread_active) {
+      std::cout<<"********** XDPPlugin::endWrite **********\n";
       // Ask writer thread to quit
       {
         std::lock_guard<std::mutex> l(mtx_writer_thread);
         stop_writer_thread = true;
       }
       cv_writer_thread.notify_one();
-      write_thread.join();
+      std::cout<<"********** Waiting for write thread to join **********\n";
+      // std::this_thread::sleep_for(std::chrono::seconds(20));
+      if(write_thread.joinable())
+      {
+        std::cout<<"********** Joining write thread **********\n";
+        write_thread.join();
+        std::cout << " Joined write thread " << std::endl;
+      }
       is_write_thread_active = false;
-    } else {
-      trySafeWrite(std::string(), false);
+    }
+    else {
+      if(write_thread.joinable())
+      {
+        std::cout<<"********** Joining write thread **********\n";
+        std::this_thread::sleep_for(std::chrono::seconds(21));
+        write_thread.join();
+        std::cout << " Joined write thread " << std::endl;
+      }
+      // trySafeWrite(std::string(), false);
     }
   }
 
@@ -152,10 +178,12 @@ namespace xdp {
   {
     if (type.empty() && openNewFiles)
       return;
-
+    std::cout<<"********** XDPPlugin::trySafeWrite **********\n";
     // If a writer is already writing, then don't do anything
     if (mtx_writer_list.try_lock()) {
+      std::cout<<"***************Lock acquired for writer list***************\n";
       for (auto w : writers) {
+        std::cout<<"********** Writing to file loop**********\n";
         bool success = w->write(openNewFiles);
         if (openNewFiles && success)
           (db->getStaticInfo()).addOpenedFile(w->getcurrentFileName().c_str(), type);

@@ -17,6 +17,7 @@
 
 #include "core/common/error.h"
 #include "core/common/message.h"
+#include <synchapi.h>
 
 #include "xdp/profile/writer/aie_trace/aie_trace_writer.h"
 
@@ -72,14 +73,22 @@ namespace xdp {
 
   void AIETraceWriter::writeTraceEvents()
   {
+    std::cout << " WriteTraceEvents from " << std::this_thread::get_id() << std::endl;
+    std::cout << "*********************************Writing AIE trace data for device #" << deviceId << ", stream #" << traceStreamId << std::endl;
+    // int parth;
+    // std::cout<<"******************Enter a number*****************\n";
+    // std::cin>>parth;
+    // std::cout<<"******************After sleep*****************\n";
     // write the entire buffer
     aie::TraceDataType* traceData = (db->getDynamicInfo()).getAIETraceData(deviceId, traceStreamId);
     if (nullptr == traceData) {
+      std::cout<<"*********************************No AIE trace data found*********************\n";
       return;
     }
 
     size_t num = traceData->buffer.size();
     if (num == 0) {
+      std::cout<<"*********************************buffer size empty*********************\n";
       delete traceData;
       return;
     }
@@ -96,6 +105,7 @@ namespace xdp {
     }
 
     for (size_t j = 0; j < num; j++) {
+      std::cout<<"*********************************Writing AIE trace data for buffer #" << j << std::endl;
       void*    buf = traceData->buffer[j];
       if (nullptr == buf)
         continue;
