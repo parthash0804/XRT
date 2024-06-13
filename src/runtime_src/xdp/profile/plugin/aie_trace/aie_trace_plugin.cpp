@@ -66,7 +66,7 @@ AieTracePluginUnified::~AieTracePluginUnified() {
                           "Destroying AIE Trace Plugin");
 
   // Stop thread to write timestamps
-  endPoll();
+  // endPoll();
 
   if (VPDatabase::alive()) {
     try {
@@ -227,17 +227,18 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   uint64_t aieTraceBufSize = GetTS2MMBufSize(true /*isAIETrace*/);
   bool isPLIO = (db->getStaticInfo()).getNumTracePLIO(deviceID) ? true : false;
 
-#ifdef XDP_CLIENT_BUILD
-  if (AIEData.metadata->getContinuousTrace()) {
-    xrt_core::message::send(severity_level::debug, "XRT", 
-                            "Periodic offload is not supported on this platform.");
-    AIEData.metadata->resetContinuousTrace();
-  }
-#else
+// #ifdef XDP_CLIENT_BUILD
+//   if (AIEData.metadata->getContinuousTrace()) {
+//     std::cout<<"****************Before startWriteThread****************\n";
+//     XDPPlugin::startWriteThread(AIEData.metadata->getFileDumpIntS(),
+//                                 "AIE_EVENT_TRACE", false);
+//     std::cout<<"****************After startWriteThread****************\n";
+//   }
+// #else
   if (AIEData.metadata->getContinuousTrace())
     XDPPlugin::startWriteThread(AIEData.metadata->getFileDumpIntS(),
                                 "AIE_EVENT_TRACE", false);
-#endif
+// #endif
 
   // First, check against memory bank size
   // NOTE: Check first buffer for PLIO; assume bank 0 for GMIO
@@ -370,15 +371,15 @@ void AieTracePluginUnified::pollAIETimers(uint64_t index, void *handle) {
 
 void AieTracePluginUnified::flushOffloader(
     const std::unique_ptr<AIETraceOffload> &offloader, bool warn) {
-  if (offloader->continuousTrace()) {
-    offloader->stopOffload();
+  // if (offloader->continuousTrace()) {
+  //   offloader->stopOffload();
 
-    while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
-      ;
-  } else {
+  //   while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
+  //     ;
+  // } else {
     offloader->readTrace(true);
     offloader->endReadTrace();
-  }
+  // }
 
   if (warn && offloader->isTraceBufferFull())
     xrt_core::message::send(severity_level::warning, "XRT",
@@ -437,22 +438,22 @@ void AieTracePluginUnified::finishFlushAIEDevice(void *handle) {
   handleToAIEData.erase(itr);
 }
 
-void AieTracePluginUnified::writeAll(bool openNewFiles) {
+void AieTracePluginUnified::writeAll(bool /*openNewFiles*/) {
   xrt_core::message::send(severity_level::info, "XRT",
                           "Beginning AIE Trace WriteAll.");
-  (void)openNewFiles;
+  // (void)openNewFiles;
 
-  for (const auto &kv : handleToAIEData) {
-    // End polling thread
-    endPollforDevice(kv.first);
+  // for (const auto &kv : handleToAIEData) {
+  //   // End polling thread
+  //   endPollforDevice(kv.first);
 
-    auto &AIEData = kv.second;
+  //   auto &AIEData = kv.second;
 
-    if (AIEData.valid) {
-      AIEData.implementation->flushTraceModules();
-      flushOffloader(AIEData.offloader, true);
-    }
-  }
+  //   if (AIEData.valid) {
+  //     AIEData.implementation->flushTraceModules();
+  //     flushOffloader(AIEData.offloader, true);
+  //   }
+  // }
 
   XDPPlugin::endWrite();
   handleToAIEData.clear();

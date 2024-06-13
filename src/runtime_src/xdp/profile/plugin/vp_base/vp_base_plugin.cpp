@@ -111,18 +111,22 @@ namespace xdp {
     */
   }
 
-  void XDPPlugin::writeContinuous(unsigned int interval, std::string type, bool openNewFiles)
+  void XDPPlugin::writeContinuous(unsigned int /*interval*/, std::string /*type*/, bool /*openNewFiles*/)
   {
-    is_write_thread_active = true;
+    std::cout<<"*****************Before sleep*****************"<<std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::cout<<"*****************After sleep*****************"<<std::endl;
 
-    while (writeCondWaitFor(std::chrono::seconds(interval)))
-      trySafeWrite(type, openNewFiles);
+    // is_write_thread_active = true;
 
-    // Do a final write
-    mtx_writer_list.lock();
-    for (auto w : writers)
-      w->write(false);
-    mtx_writer_list.unlock();
+    // while (writeCondWaitFor(std::chrono::seconds(interval)))
+    //   trySafeWrite(type, openNewFiles);
+
+    // // Do a final write
+    // mtx_writer_list.lock();
+    // for (auto w : writers)
+    //   w->write(false);
+    // mtx_writer_list.unlock();
   }
 
   void XDPPlugin::startWriteThread(unsigned int interval, std::string type, bool openNewFiles)
@@ -144,7 +148,13 @@ namespace xdp {
       write_thread.join();
       is_write_thread_active = false;
     } else {
-      trySafeWrite(std::string(), false);
+      if(write_thread.joinable())
+      {
+        std::cout<<"*****************Before join*****************"<<std::endl;
+        write_thread.join();
+        std::cout<<"*****************After join*****************"<<std::endl;
+      }
+      // trySafeWrite(std::string(), false);
     }
   }
 
