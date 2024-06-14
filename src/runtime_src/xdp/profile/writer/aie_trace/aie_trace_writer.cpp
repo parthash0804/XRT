@@ -75,10 +75,9 @@ namespace xdp {
   {
     std::cout << " WriteTraceEvents from " << std::this_thread::get_id() << std::endl;
     std::cout << "*********************************Writing AIE trace data for device #" << deviceId << ", stream #" << traceStreamId << std::endl;
-    // int parth;
-    // std::cout<<"******************Enter a number*****************\n";
-    // std::cin>>parth;
-    // std::cout<<"******************After sleep*****************\n";
+    std::cout<<"******************Enter a number*****************\n";
+    std::this_thread::sleep_for(std::chrono::seconds(20));
+    std::cout<<"******************After sleep*****************\n";
     // write the entire buffer
     aie::TraceDataType* traceData = (db->getDynamicInfo()).getAIETraceData(deviceId, traceStreamId);
     if (nullptr == traceData) {

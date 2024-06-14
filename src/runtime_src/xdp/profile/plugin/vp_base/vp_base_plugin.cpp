@@ -111,25 +111,22 @@ namespace xdp {
     */
   }
 
-  void XDPPlugin::writeContinuous(unsigned int /*interval*/, std::string /*type*/, bool /*openNewFiles*/)
+  void XDPPlugin::writeContinuous(unsigned int interval, std::string type, bool openNewFiles)
   {
-    // is_write_thread_active = true;
-    std::cout<<"********** XDPPlugin::writeContinuous **********\n";
-    std::this_thread::sleep_for(std::chrono::seconds(20));
-    std::cout<<"**************After sleep**************"<<std::endl;
+    is_write_thread_active = true;
     
-    // std::cout << " is_write_thread_active " << is_write_thread_active << std::endl;
-    // while (writeCondWaitFor(std::chrono::microseconds(interval)))
-    // {
-    //   std::cout<<"*****************Inside while loop for file write*****************\n";
-    //   trySafeWrite(type, openNewFiles);
-    // }
-    // std::cout<<"********** Exiting write thread **********\n";
-    // // Do a final write
-    // mtx_writer_list.lock();
-    // for (auto w : writers)
-    //   w->write(false);
-    // mtx_writer_list.unlock();
+    std::cout << " is_write_thread_active " << is_write_thread_active << std::endl;
+    while (writeCondWaitFor(std::chrono::seconds(interval)))
+    {
+      std::cout<<"*****************Inside while loop for file write*****************\n";
+      trySafeWrite(type, openNewFiles);
+    }
+    std::cout<<"********** Exiting write thread **********\n";
+    // Do a final write
+    mtx_writer_list.lock();
+    for (auto w : writers)
+      w->write(false);
+    mtx_writer_list.unlock();
   }
 
   void XDPPlugin::startWriteThread(unsigned int interval, std::string type, bool openNewFiles)
@@ -163,14 +160,7 @@ namespace xdp {
       is_write_thread_active = false;
     }
     else {
-      if(write_thread.joinable())
-      {
-        std::cout<<"********** Joining write thread **********\n";
-        std::this_thread::sleep_for(std::chrono::seconds(21));
-        write_thread.join();
-        std::cout << " Joined write thread " << std::endl;
-      }
-      // trySafeWrite(std::string(), false);
+      trySafeWrite(std::string(), false);
     }
   }
 
