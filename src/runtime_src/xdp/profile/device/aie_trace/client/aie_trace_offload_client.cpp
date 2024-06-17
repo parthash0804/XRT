@@ -291,16 +291,21 @@ namespace xdp {
     // Boundary at which trace ends and 0s begin
     uint64_t boundary = wordcount;
 
-    while (low <= high) {
-      int64_t mid = low + (high - low) / 2;
+    try{
+      while (low <= high) {
+        int64_t mid = low + (high - low) / 2;
 
-      if (!words[mid]) {
-        boundary = mid;
-        high = mid - 1;
+        if (!words[mid]) {
+          boundary = mid;
+          high = mid - 1;
+        }
+        else {
+          low = mid + 1;
+        }
       }
-      else {
-        low = mid + 1;
-      }
+    }
+    catch(std::exception& e){
+      std::cerr << "Exception: " << e.what() << std::endl;
     }
 
     uint64_t written = boundary * TRACE_PACKET_SIZE;
