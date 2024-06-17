@@ -105,6 +105,8 @@ namespace xdp {
       if (!xrt_bos.empty()) {
         auto bo_map = xrt_bos.back().map<uint8_t*>();
         memset(bo_map, 0, bufAllocSz);
+        std::cout<<"************************bo_map: "<<std::to_string(*(bo_map))<<std::endl;
+        std::cout<<"************************address: "<<reinterpret_cast<uint64_t>(bo_map)<<std::endl;
       }
       // Start recording the transaction
       XAie_StartTransaction(&aieDevInst, XAIE_TRANSACTION_DISABLE_AUTO_FLUSH);
@@ -178,7 +180,11 @@ namespace xdp {
     uint64_t nBytes = bd.usedSz - bd.offset;
 
     xrt_bos[index].sync(XCL_BO_SYNC_BO_FROM_DEVICE, nBytes, bd.offset);
-    auto in_bo_map = xrt_bos[index].map<uint32_t*>() + bd.offset;
+    std::cout<<"************************offset: "<<bd.offset<<std::endl;
+    auto in_bo_map = xrt_bos[index].map<uint32_t*>();
+    std::cout<<"************************in_bo_map: "<<reinterpret_cast<uint64_t>(in_bo_map)<<std::endl;
+    in_bo_map = in_bo_map + bd.offset;
+    std::cout<<"************************in_bo_map after adding offset: "<<reinterpret_cast<uint64_t>(in_bo_map)<<std::endl;
 
     if (!in_bo_map)
       return 0;
@@ -282,6 +288,8 @@ namespace xdp {
      * Use Dword to be safe
      */
     auto words = static_cast<uint64_t*>(buf);
+    std::cout<<"************************words: "<<*words<<std::endl;
+    std::cout<<"************************address: "<<reinterpret_cast<uint64_t>(buf)<<std::endl;
     uint64_t wordcount = bytes / TRACE_PACKET_SIZE;
 
     // indices
@@ -309,7 +317,7 @@ namespace xdp {
     }
 
     uint64_t written = boundary * TRACE_PACKET_SIZE;
-
+    std::cout<<"************************written: "<<written<<std::endl;
     debug_stream << "Found Boundary at 0x" << std::hex << written << std::dec
                  << std::endl;
 
