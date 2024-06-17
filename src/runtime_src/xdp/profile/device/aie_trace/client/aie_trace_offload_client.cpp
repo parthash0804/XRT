@@ -236,7 +236,7 @@ namespace xdp {
     while (keepOffloading()) {
       std::cout<<"******************Inside while loop******************\n";
       mReadTrace(false);
-      std::this_thread::sleep_for(std::chrono::microseconds(offloadIntervalUs));
+      // std::this_thread::sleep_for(std::chrono::microseconds(offloadIntervalUs));
     }
     std::cout<<"******************Outside while loop******************\n";
     // Note: This will call flush and reset on datamover
