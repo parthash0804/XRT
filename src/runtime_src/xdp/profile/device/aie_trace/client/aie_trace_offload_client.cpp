@@ -106,7 +106,8 @@ namespace xdp {
         auto bo_map = xrt_bos.back().map<uint8_t*>();
         memset(bo_map, 0, bufAllocSz);
         std::cout<<"************************bo_map: "<<std::to_string(*(bo_map))<<std::endl;
-        std::cout<<"************************address: "<<reinterpret_cast<uint64_t>(bo_map)<<std::endl;
+        std::cout<<"************************starting buffer address: "<<std::showbase <<reinterpret_cast<uint64_t>(bo_map)<<std::endl;
+        std::cout<<"************************Ending buffer address: "<<reinterpret_cast<uint64_t>(bo_map) + bufAllocSz<<std::endl;
       }
       // Start recording the transaction
       XAie_StartTransaction(&aieDevInst, XAIE_TRANSACTION_DISABLE_AUTO_FLUSH);
@@ -287,9 +288,15 @@ namespace xdp {
      * Look For trace boundary using binary search.
      * Use Dword to be safe
      */
+
     auto words = static_cast<uint64_t*>(buf);
+    try{
     std::cout<<"************************words: "<<*words<<std::endl;
     std::cout<<"************************address: "<<reinterpret_cast<uint64_t>(buf)<<std::endl;
+    }
+    catch(std::exception& e){
+      std::cerr << "Exception: " << e.what() << std::endl;
+    }
     uint64_t wordcount = bytes / TRACE_PACKET_SIZE;
 
     // indices

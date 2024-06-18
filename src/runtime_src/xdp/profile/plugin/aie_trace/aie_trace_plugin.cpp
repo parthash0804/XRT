@@ -124,8 +124,13 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
 
   // Update the static database with information from xclbin
 #ifdef XDP_CLIENT_BUILD
+try {
   (db->getStaticInfo()).updateDeviceClient(deviceID, device);
   (db->getStaticInfo()).setDeviceName(deviceID, "win_device");
+}
+catch(std::exception &e) {
+  std::cout<<"Exception in updateDeviceClient: "<<e.what()<<std::endl;
+}
 #else
   // Update the static database with information from xclbin
   (db->getStaticInfo()).updateDevice(deviceID, handle);
