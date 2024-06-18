@@ -113,7 +113,7 @@ namespace xdp {
 
   void XDPPlugin::writeContinuous(unsigned int interval, std::string type, bool openNewFiles)
   {
-    is_write_thread_active = true;
+    // is_write_thread_active = true;
     std::cout<<"******************Inside writeContinuous******************\n";
     while (writeCondWaitFor(std::chrono::seconds(interval)))
     {
@@ -138,7 +138,6 @@ namespace xdp {
   void XDPPlugin::endWrite()
   {
     std::cout<<"******************Inside endWrite******************\n";
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     if (is_write_thread_active) {
       // Ask writer thread to quit
       {
