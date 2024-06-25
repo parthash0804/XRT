@@ -218,11 +218,9 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   bool isPLIO = (db->getStaticInfo()).getNumTracePLIO(deviceID) ? true : false;
 
 #ifdef XDP_CLIENT_BUILD
-  if (AIEData.metadata->getContinuousTrace()) {
-    xrt_core::message::send(severity_level::debug, "XRT", 
-                            "Periodic offload is not supported on this platform.");
-    AIEData.metadata->resetContinuousTrace();
-  }
+  if (AIEData.metadata->getContinuousTrace()) 
+    XDPPlugin::startWriteThread(AIEData.metadata->getFileDumpIntS(),
+                                "AIE_EVENT_TRACE", false);
 #else
   if (AIEData.metadata->getContinuousTrace())
     XDPPlugin::startWriteThread(AIEData.metadata->getFileDumpIntS(),

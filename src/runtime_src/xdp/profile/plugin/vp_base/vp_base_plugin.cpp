@@ -115,7 +115,7 @@ namespace xdp {
   {
     is_write_thread_active = true;
 
-    while (writeCondWaitFor(std::chrono::seconds(interval)))
+    while (writeCondWaitFor(std::chrono::microseconds(interval)))
       trySafeWrite(type, openNewFiles);
 
     // Do a final write
