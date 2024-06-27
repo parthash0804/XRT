@@ -218,7 +218,7 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   bool isPLIO = (db->getStaticInfo()).getNumTracePLIO(deviceID) ? true : false;
 
 #ifdef XDP_CLIENT_BUILD
-  if (AIEData.metadata->getContinuousTrace()) 
+  if (AIEData.metadata->getPeriodicOffloadClient()) 
     XDPPlugin::startWriteThread(AIEData.metadata->getFileDumpIntS(),
                                 "AIE_EVENT_TRACE", false);
 #else
@@ -281,10 +281,17 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   auto &offloader = AIEData.offloader;
 
   // Can't call init without setting important details in offloader
+#ifdef XDP_CLIENT_BUILD
+  if(AIEData.metadata->getPeriodicOffloadClient()) {
+    offloader->setPeriodicOffloadClient();
+    offloader->setOffloadIntervalUs(AIEData.metadata->getOffloadIntervalUs());
+  }
+#else
   if (AIEData.metadata->getContinuousTrace()) {
     offloader->setContinuousTrace();
     offloader->setOffloadIntervalUs(AIEData.metadata->getOffloadIntervalUs());
   }
+#endif
 
   try {
     if (!offloader->initReadTrace()) {
@@ -334,8 +341,13 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   AIEData.implementation->updateDevice();
 
   // Continuous Trace Offload is supported only for PLIO flow
+#ifdef XDP_CLIENT_BUILD
+  if (AIEData.metadata->getPeriodicOffloadClient())
+    offloader->startOffload();
+#else
   if (AIEData.metadata->getContinuousTrace())
     offloader->startOffload();
+#endif
 
   xrt_core::message::send(severity_level::info, "XRT",
                           "Finished AIE Trace updateAIEDevice.");
@@ -358,6 +370,18 @@ void AieTracePluginUnified::pollAIETimers(uint64_t index, void *handle) {
 
 void AieTracePluginUnified::flushOffloader(
     const std::unique_ptr<AIETraceOffload> &offloader, bool warn) {
+#ifdef XDP_CLIENT_BUILD
+  if (offloader->getPeriodicOffloadClient()) {
+    offloader->stopOffload();
+
+    while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
+      ;
+  } else {
+    offloader->readTrace(true);
+    offloader->endReadTrace();
+  }
+
+#else
   if (offloader->continuousTrace()) {
     offloader->stopOffload();
 
@@ -367,6 +391,7 @@ void AieTracePluginUnified::flushOffloader(
     offloader->readTrace(true);
     offloader->endReadTrace();
   }
+#endif
 
   if (warn && offloader->isTraceBufferFull())
     xrt_core::message::send(severity_level::warning, "XRT",
