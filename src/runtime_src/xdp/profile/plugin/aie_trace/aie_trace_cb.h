@@ -25,5 +25,9 @@ extern "C" {
   XDP_PLUGIN_EXPORT void flushAIEDevice(void* handle);
   XDP_PLUGIN_EXPORT void finishFlushAIEDevice(void* handle);
 
+#ifdef XDP_CLIENT_BUILD
+  XDP_PLUGIN_EXPORT void callBackForCleanup();
+#endif
+
 }
 #endif

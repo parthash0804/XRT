@@ -26,6 +26,7 @@
 
 #ifdef XDP_CLIENT_BUILD
 #include "xdp/profile/device/aie_trace/client/aie_trace_offload_client.h"
+#include "xdp/profile/plugin/aie_trace/aie_trace_cb.h"
 #else
 #include "xdp/profile/device/aie_trace/aie_trace_offload.h"
 #endif
@@ -39,6 +40,7 @@ public:
   void updateAIEDevice(void *handle);
   void flushAIEDevice(void *handle);
   void finishFlushAIEDevice(void *handle);
+  void doCleanup();
   virtual void writeAll(bool openNewFiles) override;
   void endPollforDevice(void *handle);
   static bool alive();

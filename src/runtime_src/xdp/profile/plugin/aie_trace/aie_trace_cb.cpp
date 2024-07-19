@@ -43,7 +43,14 @@ namespace xdp {
     if (AieTracePluginUnified::alive())
       aieTracePluginInstance.finishFlushAIEDevice(handle);
   }
-  
+
+#ifdef XDP_CLIENT_BUILD  
+  static void callBackForCleanup()
+  {
+    if (AieTracePluginUnified::alive())
+      aieTracePluginInstance.doCleanup();
+  }
+#endif
 } // end namespace xdp
 
 extern "C" 
@@ -63,3 +70,11 @@ void finishFlushAIEDevice(void* handle)
 {
   xdp::finishFlushAIEDevice(handle);
 }
+
+#ifdef XDP_CLIENT_BUILD
+extern "C"
+void callBackForCleanup()
+{
+  xdp::callBackForCleanup();
+}
+#endif

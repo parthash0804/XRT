@@ -52,19 +52,10 @@ namespace xdp {
 using severity_level = xrt_core::message::severity_level;
 bool AieTracePluginUnified::live = false;
 
-AieTracePluginUnified::AieTracePluginUnified() : XDPPlugin() {
-  AieTracePluginUnified::live = true;
-
-  db->registerPlugin(this);
-  db->registerInfo(info::aie_trace);
-  db->getStaticInfo().setAieApplication();
-}
-
-AieTracePluginUnified::~AieTracePluginUnified() {
+void AieTracePluginUnified::doCleanup()
+{
   xrt_core::message::send(severity_level::info, "XRT",
-                          "Destroying AIE Trace Plugin");
-
-  // Stop thread to write timestamps
+                          "Doing Cleanup for AIE Trace Plugin");
   endPoll();
 
   if (VPDatabase::alive()) {
@@ -79,6 +70,40 @@ AieTracePluginUnified::~AieTracePluginUnified() {
   // If the database is dead, then we must have already forced a
   // write at the database destructor so we can just move on
   AieTracePluginUnified::live = false;
+}
+
+AieTracePluginUnified::AieTracePluginUnified() : XDPPlugin() {
+  AieTracePluginUnified::live = true;
+
+  db->registerPlugin(this);
+  db->registerInfo(info::aie_trace);
+  db->getStaticInfo().setAieApplication();
+
+  //register a callback function to perform cleanup
+#ifdef XDP_CLIENT_BUILD
+    atexit(callBackForCleanup);
+#endif
+}
+
+AieTracePluginUnified::~AieTracePluginUnified() {
+  // xrt_core::message::send(severity_level::info, "XRT",
+  //                         "Destroying AIE Trace Plugin");
+
+  // // Stop thread to write timestamps
+  // endPoll();
+
+  // if (VPDatabase::alive()) {
+  //   try {
+  //     writeAll(false);
+  //   } catch (...) {
+  //   }
+
+  //   db->unregisterPlugin(this);
+  // }
+
+  // // If the database is dead, then we must have already forced a
+  // // write at the database destructor so we can just move on
+  // AieTracePluginUnified::live = false;
 }
 
 uint64_t AieTracePluginUnified::getDeviceIDFromHandle(void *handle) {
