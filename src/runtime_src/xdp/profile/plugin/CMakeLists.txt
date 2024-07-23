@@ -6,13 +6,13 @@ if (XDP_CLIENT_BUILD_CMAKE STREQUAL "yes")
 
   add_subdirectory(native)
   add_subdirectory(user)
-  
-  if (WIN32)
+  message("-- ****************************************************XDP_CLIENT_BUILD_CMAKE plugin =  ${XDP_CLIENT_BUILD_CMAKE}************************************")
+#  if (WIN32)
     add_subdirectory(aie_profile)
     add_subdirectory(aie_trace)
     add_subdirectory(aie_debug)
     add_subdirectory(ml_timeline)
-  endif()
+#  endif()
 else()
 
 # =========================================================
@@ -33,6 +33,7 @@ if (NOT WIN32)
 # =========================================================
 # The plugins to be built on Linux only
 # =========================================================
+#message("-- ****************************************************XDP_CLIENT_BUILD_CMAKE plugin =  ${XDP_CLIENT_BUILD_CMAKE}************************************")
 add_subdirectory(aie_status)
 add_subdirectory(aie_profile)
 add_subdirectory(aie_trace)

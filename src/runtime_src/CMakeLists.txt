@@ -30,6 +30,7 @@ endif(XRT_ENABLE_WERROR)
 if (${XRT_NATIVE_BUILD} STREQUAL "yes")
   add_compile_options( ${XRT_WARN_OPTS} )
 endif()
+message("-- ****************************************************XDP_CLIENT_BUILD_CMAKE runtume_src =  ${XDP_CLIENT_BUILD_CMAKE}************************************")
 xrt_add_subdirectory(xdp)
 
 xrt_add_subdirectory(tools/xclbinutil)

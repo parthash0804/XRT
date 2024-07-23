@@ -108,6 +108,10 @@ set(XRT_VERSION_STRING ${XRT_VERSION_MAJOR}.${XRT_VERSION_MINOR}.${XRT_VERSION_P
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${XRT_SOURCE_DIR}/CMake/")
 
+set(XDP_CLIENT_BUILD_CMAKE "yes")
+set(AIERT_DIR ${CMAKE_CURRENT_BINARY_DIR}/aie-rt)
+add_subdirectory(aie-rt/driver/src aie-rt)
+
 if (${XRT_NATIVE_BUILD} STREQUAL "yes")
   # Enable testing for this directory and below.  This command should be
   # in the source directory root because ctest expects to find a test

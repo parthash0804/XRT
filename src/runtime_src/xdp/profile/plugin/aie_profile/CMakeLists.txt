@@ -15,6 +15,8 @@ elseif (DEFINED XRT_AIE_BUILD AND ${XRT_NATIVE_BUILD} STREQUAL "no")
   set(IMPL_DIR "${PROFILE_DIR}/plugin/aie_profile/edge")
 endif()
 
+message("-- ****************************************************IMPL DIR PATH =  ${IMPL_DIR}************************************")
+
 file(GLOB AIE_PROFILE_PLUGIN_FILES
   "${PROFILE_DIR}/plugin/aie_profile/*.h"
   "${PROFILE_DIR}/plugin/aie_profile/*.cpp"

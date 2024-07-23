@@ -32,7 +32,7 @@ endif()
 if (XDP_CLIENT_BUILD_CMAKE STREQUAL "yes")
 
  add_compile_options("-DSKIP_IOCTL")
-
+ message("-- ****************************************************XDP_CLIENT_BUILD_CMAKE xdp =  ${XDP_CLIENT_BUILD_CMAKE}************************************")
  add_subdirectory(profile)
 
 else()
