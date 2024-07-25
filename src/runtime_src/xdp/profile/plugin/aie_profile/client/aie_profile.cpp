@@ -42,7 +42,7 @@
 // XRT headers
 #include "xrt/xrt_bo.h"
 #include "core/common/shim/hwctx_handle.h"
-#include <windows.h> 
+//#include <windows.h> 
 
 namespace xdp {
   using severity_level = xrt_core::message::severity_level;
@@ -234,7 +234,7 @@ namespace xdp {
     op_size = sizeof(read_register_op_t) + sizeof(register_data_t) * (counterId - 1);
     op = (read_register_op_t*)malloc(op_size);
     op->count = counterId;
-    for (int i = 0; i < op_profile_data.size(); i++) {
+    for (size_t i = 0; i < op_profile_data.size(); i++) {
       op->data[i] = op_profile_data[i];
     }
     

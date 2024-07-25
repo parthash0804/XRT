@@ -129,9 +129,9 @@ class AIETraceOffload
     bool mEnCircularBuf;
     bool mCircularBufOverwrite;
 
-    std::shared_ptr<AieTraceMetadata> metadata;
     std::vector<xrt::bo> xrt_bos;
     xrt::hw_context context;
+    std::shared_ptr<AieTraceMetadata> metadata;
 
   private:
     void readTraceGMIO(bool final);

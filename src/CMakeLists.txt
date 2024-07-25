@@ -28,6 +28,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message("-- Host system processor is ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 message("-- Target system processor is ${CMAKE_SYSTEM_PROCESSOR}")
 
+set(XDP_CLIENT_BUILD_CMAKE "yes")
 set(XRT_NATIVE_BUILD "yes")
 if (NOT ${CMAKE_SYSTEM_PROCESSOR} STREQUAL ${CMAKE_HOST_SYSTEM_PROCESSOR})
   set(XRT_NATIVE_BUILD "no")
@@ -108,10 +109,6 @@ set(XRT_VERSION_STRING ${XRT_VERSION_MAJOR}.${XRT_VERSION_MINOR}.${XRT_VERSION_P
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${XRT_SOURCE_DIR}/CMake/")
 
-set(XDP_CLIENT_BUILD_CMAKE "yes")
-set(AIERT_DIR ${CMAKE_CURRENT_BINARY_DIR}/aie-rt)
-add_subdirectory(aie-rt/driver/src aie-rt)
-
 if (${XRT_NATIVE_BUILD} STREQUAL "yes")
   # Enable testing for this directory and below.  This command should be
   # in the source directory root because ctest expects to find a test
@@ -130,3 +127,6 @@ if (${XRT_NATIVE_BUILD} STREQUAL "yes")
 else()
   include(CMake/embedded_system.cmake)
 endif()
+
+set(AIERT_DIR ${CMAKE_CURRENT_BINARY_DIR}/aie-rt)
+add_subdirectory(aie-rt/driver/src)

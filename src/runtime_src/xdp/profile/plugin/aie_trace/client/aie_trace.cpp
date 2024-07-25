@@ -579,7 +579,7 @@ namespace xdp {
     //std::map<uint8_t, std::shared_ptr<xaiefal::XAieStreamPortSelect>> switchPortMap;
 
     // Traverse all counters and request monitor ports as needed
-    for (int i=0; i < events.size(); ++i) {
+    for (size_t i=0; i < events.size(); ++i) {
       // Ensure applicable event
       auto event = events.at(i);
       if (!isStreamSwitchPortEvent(event))
@@ -707,9 +707,9 @@ namespace xdp {
           XAIE_EVENT_COMBO_E1_OR_E2, XAIE_EVENT_COMBO_E1_OR_E2};
 
       // Capture in config class to report later
-      for (int i=0; i < NUM_COMBO_EVENT_CONTROL; ++i)
+      for (size_t i=0; i < NUM_COMBO_EVENT_CONTROL; ++i)
         config.combo_event_control[i] = 2;
-      for (int i=0; i < events.size(); ++i) {
+      for (size_t i=0; i < events.size(); ++i) {
         uint8_t phyEvent = 0;
         XAie_EventLogicalToPhysicalConv(&aieDevInst, loc, mod, events.at(i), &phyEvent);
         config.combo_event_input[i] = phyEvent;
@@ -890,7 +890,7 @@ namespace xdp {
 
     // Zero trace event tile counts
     for (int m = 0; m < static_cast<int>(module_type::num_types); ++m) {
-      for (int n = 0; n <= NUM_TRACE_EVENTS; ++n)
+      for (size_t n = 0; n <= NUM_TRACE_EVENTS; ++n)
         mNumTileTraceEvents[m][n] = 0;
     }
 
@@ -1320,7 +1320,7 @@ namespace xdp {
                                 interfaceEvents, cfgTile->interface_tile_trace_config);
 
         // Configure interface tile trace events
-        for (int i = 0; i < interfaceEvents.size(); i++) {
+        for (size_t i = 0; i < interfaceEvents.size(); i++) {
           auto event = interfaceEvents.at(i);
           //auto TraceE = shim.traceEvent();
           //TraceE->setEvent(XAIE_PL_MOD, event);
