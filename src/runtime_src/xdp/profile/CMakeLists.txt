@@ -48,3 +48,5 @@ install (TARGETS xdp_core
 message("-- ****************************************************XDP_CLIENT_BUILD_CMAKE profile =  ${XDP_CLIENT_BUILD_CMAKE}************************************")
 # Build the individual plugins
 add_subdirectory(plugin)
+
+# include(CPack)

@@ -340,17 +340,26 @@ namespace xdp {
     auto resultBOMap = resultBO.map<uint8_t*>();
     uint32_t* output = reinterpret_cast<uint32_t*>(resultBOMap);
 
+    std::cout<<"******************************  op->count size : "<< op->count<<" ******************************"<<std::endl;
+    std::cout<<"******************************  outputValues size : "<< outputValues.size()<<" ******************************"<<std::endl;
     for (uint32_t i = 0; i < op->count; i++) {
       std::stringstream msg;
-      msg << "Counter address/values: 0x" << std::hex << op->data[i].address << ": " << std::dec << output[i];
+      msg << i <<": Counter address/values: 0x" << std::hex << op->data[i].address << ": " << std::dec << output[i];
       xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT", msg.str());
+      std::cout<<"outputValues[i] size "<<outputValues[i].size()<<std::endl;
       std::vector<uint64_t> values = outputValues[i];
       values[5] = static_cast<uint64_t>(output[i]); //write pc value
+      std::cout<<"********************values[5] : "<<values[5]<<" ******************************"<<std::endl;
       db->getDynamicInfo().addAIESample(index, timestamp, values);
+      std::cout<<"******************************  Sample added ******************************"<<std::endl;
     }
+
+    std::cout<<"******************************  Finished Poll ******************************"<<std::endl;
 
     finishedPoll=true;
     free(op);
+
+    std::cout<<"******************************  op freed ******************************"<<std::endl;
   }
 
   void

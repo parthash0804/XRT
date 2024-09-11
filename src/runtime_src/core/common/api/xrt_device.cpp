@@ -234,18 +234,24 @@ device::
 device(unsigned int index)
   : handle(xdp::native::profiling_wrapper("xrt::device::device",
 	   alloc_device_index, index))
-{}
+{
+  std::cout<<"**************************************Inside device Constructor 1************************"<<std::endl;
+}
 
 device::
 device(const std::string& bdf)
   : device(xrt_core::get_device_id(bdf))
-{}
+{
+  std::cout<<"**************************************Inside device Constructor 2************************"<<std::endl;
+}
 
 device::
 device(xclDeviceHandle dhdl)
   : handle(xdp::native::profiling_wrapper("xrt::device::device",
 	   alloc_device_handle, dhdl))
-{}
+{
+  std::cout<<"**************************************Inside device Constructor 3************************"<<std::endl;
+}
 
 uuid
 device::

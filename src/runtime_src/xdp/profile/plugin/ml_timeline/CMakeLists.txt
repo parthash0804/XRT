@@ -29,6 +29,7 @@ if (XDP_CLIENT_BUILD_CMAKE STREQUAL "yes")
 
   install (TARGETS xdp_ml_timeline_plugin
     LIBRARY DESTINATION ${XDP_PLUGIN_INSTALL_DIR}
+    COMPONENT ${XDNA_COMPONENT}
   )
 
 endif()

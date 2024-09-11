@@ -359,14 +359,18 @@ void AieTracePluginUnified::pollAIETimers(uint64_t index, void *handle) {
 
 void AieTracePluginUnified::flushOffloader(
     const std::unique_ptr<AIETraceOffload> &offloader, bool warn) {
+      std::cout<<"*********************Inside flush offloader"<<std::endl;
   if (offloader->continuousTrace()) {
     offloader->stopOffload();
 
     while (offloader->getOffloadStatus() != AIEOffloadThreadStatus::STOPPED)
       ;
   } else {
+    std::cout<<"*********************8Before read trace"<<std::endl;
     offloader->readTrace(true);
+    std::cout<<"*********************After read trace"<<std::endl;
     offloader->endReadTrace();
+    std::cout<<"*********************After end read trace"<<std::endl;
   }
 
   if (warn && offloader->isTraceBufferFull())
@@ -441,9 +445,11 @@ void AieTracePluginUnified::writeAll(bool openNewFiles) {
       flushOffloader(AIEData.offloader, true);
     }
   }
-
+  std::cout<<"**************************Outside flush offloader"<<std::endl;
   XDPPlugin::endWrite();
+  std::cout<<"**************************After end write"<<std::endl;
   handleToAIEData.clear();
+  std::cout<<"**************************After clear"<<std::endl;
 }
 
 bool AieTracePluginUnified::alive() { return AieTracePluginUnified::live; }

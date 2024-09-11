@@ -63,6 +63,7 @@ namespace xdp {
 
   bool AIEProfilingWriter::write(bool)
   {
+    std::cout<<"******************************Inside Write"<<std::endl;
     if(!mHeaderWritten) {
       this->writeHeader();
       this->mHeaderWritten = true;

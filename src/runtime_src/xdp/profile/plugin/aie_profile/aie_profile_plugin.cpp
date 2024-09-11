@@ -66,13 +66,14 @@ namespace xdp {
 
     AieProfilePlugin::live = false;
     endPoll();
-
+    std::cout<<"**************************After AIE Profile endPoll."<<std::endl;
     if (VPDatabase::alive()) {
       for (auto w : writers) {
         w->write(false);
       }
-
+      std::cout<<"**************************After AIE Profile write."<<std::endl;
       db->unregisterPlugin(this);
+      std::cout<<"**************************After AIE Profile unregisterPlugin."<<std::endl;
     }
 
   }
@@ -97,6 +98,7 @@ namespace xdp {
 
   void AieProfilePlugin::updateAIEDevice(void* handle)
   {
+    std::cout<<"**************************Calling AIE Profile update AIE device."<<std::endl;
     xrt_core::message::send(severity_level::info, "XRT", "Calling AIE Profile update AIE device.");
     // Don't update if no profiling is requested
     if (!xrt_core::config::get_aie_profile())
@@ -267,18 +269,26 @@ auto time = std::time(nullptr);
     #ifdef XDP_CLIENT_BUILD
       auto& AIEData = handleToAIEData.begin()->second;
       AIEData.implementation->poll(0, nullptr);
+      std::cout<<"**************************After AIE Profile poll."<<std::endl;
     #endif
     // Ask all threads to end
     for (auto& p : handleToAIEData)
       p.second.threadCtrlBool = false;
 
+    std::cout<<"**************************After AIE Profile threadCtrlBool."<<std::endl;
     for (auto& p : handleToAIEData) {
+      std::cout<<"**************************Inside AIE Profile thread join."<<std::endl;
       auto& data = p.second;
       if (data.thread.joinable())
+      {
+        std::cout<<"**************************Inside if condition"<<std::endl;
         data.thread.join();
+        std::cout<<"**************************After AIE Profile thread join."<<std::endl;
+      }
     }
-
+    std::cout<<"**************************outside for loop."<<std::endl;
     handleToAIEData.clear();
+    std::cout<<"**************************After AIE Profile handleToAIEData clear."<<std::endl;
   }
 
   void AieProfilePlugin::broadcast(VPDatabase::MessageType msg, void* /*blob*/)

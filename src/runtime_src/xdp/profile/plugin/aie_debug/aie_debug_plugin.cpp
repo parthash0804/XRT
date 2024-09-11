@@ -57,6 +57,7 @@ namespace xdp {
   void
   AieDebugPlugin::
   updateAIEDevice(void* handle) {
+    std::cout<<"*****************************************calling aie debug plugin"<<std::endl;
     if (!xrt_core::config::get_aie_debug())
       return;
 

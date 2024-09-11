@@ -128,6 +128,14 @@ namespace xdp {
         << std::hex << mBufSz << std::dec << std::endl;
     xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT", msg.str());
 
+    for(uint32_t i = 0 ; i < numEntries; i++)
+    {
+      std::cout<<"***********************id: "<<*ptr<<std::endl;
+      ptr++;
+      std::cout<<"***********************cycle: "<<*ptr<<std::endl;
+      ptr++;
+    }
+
     if (numEntries <= max_count) {
       for (uint32_t i = 0 ; i < numEntries; i++) {
         boost::property_tree::ptree ptIdTS;
