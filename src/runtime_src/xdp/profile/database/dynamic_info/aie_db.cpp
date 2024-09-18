@@ -53,6 +53,9 @@ namespace xdp {
       // We need to copy data as it may be overwritten by datamover
       trace_buffer = new unsigned char[bufferSz];
       std::memcpy(trace_buffer, buffer, bufferSz);
+      for(int i=0;i<bufferSz/4;i++)
+        std::cout<<"*****Data: "<<((uint32_t*)trace_buffer)[i]<<std::endl;
+          
     }
     traceData[strmIndex]->buffer.push_back(trace_buffer);
     traceData[strmIndex]->bufferSz.push_back(bufferSz);

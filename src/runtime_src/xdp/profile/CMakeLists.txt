@@ -46,5 +46,6 @@ install (TARGETS xdp_core
   LIBRARY DESTINATION ${XRT_INSTALL_LIB_DIR} COMPONENT ${XRT_DEV_COMPONENT} ${XRT_NAMELINK_ONLY}
 )
 
+message("-- ****************************************************XDP_CLIENT_BUILD_CMAKE profile =  ${XDP_CLIENT_BUILD_CMAKE}************************************")
 # Build the individual plugins
 add_subdirectory(plugin)

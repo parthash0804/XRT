@@ -193,7 +193,7 @@ namespace xdp {
       return 0;
 
     nBytes = searchWrittenBytes((void*)in_bo_map, bufAllocSz);
-
+    std::cout<<"**********************nBytes: "<<nBytes<<std::endl;
     // check for full buffer
     if (bd.offset + nBytes >= bufAllocSz) {
       bd.isFull = true;

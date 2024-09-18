@@ -24,6 +24,7 @@ namespace xdp {
 
   static void updateAIECtrDevice(void* handle)
   {
+    std::cout<<"**************************Inside profile cb updateAIECtrDevice**************************"<<std::endl;
     if (AieProfilePlugin::alive())
       aieProfilePluginInstance.updateAIEDevice(handle);
   }
@@ -39,6 +40,7 @@ namespace xdp {
 extern "C"
 void updateAIECtrDevice(void* handle)
 {
+  std::cout<<"***********************************Inside profile cb updateAIECtrDevice extern c***********************************"<<std::endl;
   xdp::updateAIECtrDevice(handle);
 }
 

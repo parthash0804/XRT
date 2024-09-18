@@ -17,6 +17,9 @@ if (NOT WIN32)
     )
   set(XDP_PLUGIN_INSTALL_DIR ${XRT_INSTALL_LIB_DIR}/xrt/module)
 
+  message("-- ***********************XDP_PLUGIN_INSTALL_DIR ${XDP_PLUGIN_INSTALL_DIR}")
+  
+
 else()
 
   include_directories(

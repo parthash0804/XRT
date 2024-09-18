@@ -22,4 +22,5 @@ set_target_properties(xdp_user_plugin PROPERTIES VERSION ${XRT_VERSION_STRING} S
 
 install (TARGETS xdp_user_plugin
   LIBRARY DESTINATION ${XDP_PLUGIN_INSTALL_DIR}
+  COMPONENT ${XDNA_COMPONENT}
 )

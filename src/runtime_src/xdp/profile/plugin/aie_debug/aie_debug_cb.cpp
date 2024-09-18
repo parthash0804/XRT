@@ -12,6 +12,7 @@ namespace xdp {
 
   static void updateAIEDebugDevice(void* handle)
   {
+    std::cout<<"***************************************Inside debug cb updateAIEDebugDevice***************************************"<<std::endl;
     if (AieDebugPlugin::alive())
       aieDebugPluginInstance.updateAIEDevice(handle);
   }
@@ -27,6 +28,7 @@ namespace xdp {
 extern "C"
 void updateAIEDebugDevice(void* handle)
 {
+  std::cout<<"***********************************Inside debug cb updateAIEDebugDevice extern c***********************************"<<std::endl;
   xdp::updateAIEDebugDevice(handle);
 }
 

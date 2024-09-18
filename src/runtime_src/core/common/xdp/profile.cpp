@@ -7,6 +7,7 @@
 #include "core/common/dlfcn.h"
 #include "core/common/module_loader.h"
 #include <functional>
+#include <iostream>
 
 #ifdef _WIN32
 #pragma warning( disable : 4996 ) /* Disable warning for getenv */
@@ -28,6 +29,7 @@ namespace xrt_core::xdp::core {
   void
   load_core()
   {
+    std::cout<<"********************************************inside core load"<<std::endl;
     static xrt_core::module_loader xdp_core_loader("xdp_core",
                                                    register_callbacks,
                                                    warning_callbacks);
@@ -61,6 +63,7 @@ warning_callbacks()
 void 
 load()
 {
+  std::cout<<"********************************************inside aie_profile load"<<std::endl;
   static xrt_core::module_loader xdp_aie_loader("xdp_aie_profile_plugin",
                                                 register_callbacks,
                                                 warning_callbacks);
@@ -70,6 +73,7 @@ load()
 void 
 update_device(void* handle)
 {
+  std::cout<<"*****************************************Inside profile update_device"<<std::endl;
   if (update_device_cb)
     update_device_cb(handle);
 }
@@ -109,6 +113,7 @@ warning_callbacks()
 void 
 load()
 {
+  std::cout<<"*****************************************Inside xdp_aie_debug_plugin load"<<std::endl;
   static xrt_core::module_loader xdp_aie_debug_loader("xdp_aie_debug_plugin",
                                                 register_callbacks,
                                                 warning_callbacks);
@@ -118,6 +123,7 @@ load()
 void 
 update_device(void* handle)
 {
+  std::cout<<"*****************************************Inside debug update_device"<<std::endl;
   if (update_device_cb)
     update_device_cb(handle);
 }
@@ -333,7 +339,8 @@ update_device(void* handle)
   /* Adding the macro guard as the static instances of the following plugins
    * get created unnecessarily when the configs are enabled on Edge.
    */
-
+  #ifdef _WIN32
+  std::cout<<"****************************************Inside update_device"<<std::endl;
   if (xrt_core::config::get_ml_timeline()
       || xrt_core::config::get_aie_profile()
       || xrt_core::config::get_aie_trace()
@@ -343,12 +350,14 @@ update_device(void* handle)
      * explicitly load it to avoid library search issue in implicit loading.
      */
     try {
+      std::cout<<"****************************************Inside update_device xdp_core"<<std::endl;
       xrt_core::xdp::core::load_core();
     } catch (...) {
       return;
     }
   }
-
+  #endif
+  
   if (xrt_core::config::get_aie_halt()) {
     try {
       xrt_core::xdp::aie::halt::load();
@@ -361,6 +370,7 @@ update_device(void* handle)
 
   if (xrt_core::config::get_aie_profile()) {
     try {
+      std::cout<<"****************************************Inside update_device aie_profile"<<std::endl;
       xrt_core::xdp::aie::profile::load();
     } 
     catch (...) {
@@ -371,6 +381,7 @@ update_device(void* handle)
 
   if (xrt_core::config::get_aie_trace()) {
     try {
+      std::cout<<"****************************************Inside update_device aie_trace"<<std::endl;
       xrt_core::xdp::aie::trace::load();
     } 
     catch (...) {
@@ -382,6 +393,7 @@ update_device(void* handle)
 
   if (xrt_core::config::get_aie_debug()) {
     try {
+      std::cout<<"****************************************Inside update_device aie_debug"<<std::endl;
       xrt_core::xdp::aie::debug::load();
     } 
     catch (...) {
@@ -392,6 +404,7 @@ update_device(void* handle)
 
   if (xrt_core::config::get_ml_timeline()) {
     try {
+      std::cout<<"****************************************Inside update_device ml_timeline"<<std::endl;
       xrt_core::xdp::ml_timeline::load();
     }
     catch (...) {

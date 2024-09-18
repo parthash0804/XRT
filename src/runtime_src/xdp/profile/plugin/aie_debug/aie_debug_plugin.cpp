@@ -57,6 +57,7 @@ namespace xdp {
   void
   AieDebugPlugin::
   updateAIEDevice(void* handle) {
+    std::cout<<"*****************************************calling aie debug plugin"<<std::endl;
     if (!xrt_core::config::get_aie_debug())
       return;
 
@@ -129,12 +130,13 @@ namespace xdp {
       tiles.erase(std::unique(tiles.begin(), tiles.end()), tiles.end());
       std::stringstream msg;
       msg << "AIE Debug monitoring tiles of type " << name << ":\n";
+      std::cout<<"**********************tiles.size() = "<<tiles.size()<<std::endl;
       for (const auto& t: tiles)
         msg << t.col << "," << t.row << " ";
       xrt_core::message::send(severity_level::debug, "XRT", msg.str());
 
       for (auto &tile : tiles) {
-        for (int i = 0; i < Regs.size(); i++) {
+        for (size_t i = 0; i < Regs.size(); i++) {
           op_profile_data.emplace_back(register_data_t{Regs[i] + (tile.col << 25) + (tile.row << 20)});
           counterId++;
         }
@@ -150,7 +152,7 @@ namespace xdp {
     op_size = sizeof(read_register_op_t) + sizeof(register_data_t) * (counterId - 1);
     op = (read_register_op_t*)malloc(op_size);
     op->count = counterId;
-    for (int i = 0; i < op_profile_data.size(); i++)
+    for (size_t i = 0; i < op_profile_data.size(); i++)
       op->data[i] = op_profile_data[i];
 
   #if 0

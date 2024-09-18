@@ -15,6 +15,9 @@ elseif (DEFINED XRT_AIE_BUILD AND ${XRT_NATIVE_BUILD} STREQUAL "no")
   set(IMPL_DIR "${PROFILE_DIR}/plugin/aie_profile/edge")
 endif()
 
+message("-- ****************************************************IMPL DIR PATH =  ${IMPL_DIR}************************************")
+message("-- ****************************************************XDP_CLIENT_BUILD_CMAKE aie_profile =  ${XDP_CLIENT_BUILD_CMAKE}************************************")
+
 file(GLOB AIE_PROFILE_PLUGIN_FILES
   "${PROFILE_DIR}/plugin/aie_profile/*.h"
   "${PROFILE_DIR}/plugin/aie_profile/*.cpp"
@@ -42,8 +45,10 @@ if (XDP_CLIENT_BUILD_CMAKE STREQUAL "yes")
   target_include_directories(xdp_aie_profile_plugin PRIVATE ${AIERT_DIR}/include)
   set_target_properties(xdp_aie_profile_plugin PROPERTIES VERSION ${XRT_VERSION_STRING} SOVERSION ${XRT_SOVERSION})
 
+  message("-- ****************************************************Inside Client build************************************")
   install (TARGETS xdp_aie_profile_plugin
     LIBRARY DESTINATION ${XDP_PLUGIN_INSTALL_DIR}
+    COMPONENT ${XDNA_COMPONENT}
   )
 
 
