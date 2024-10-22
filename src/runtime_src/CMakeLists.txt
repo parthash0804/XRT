@@ -6,6 +6,17 @@
 
 if( NOT WIN32)
 
+if (XDP_CLIENT_BUILD_CMAKE STREQUAL "yes")
+  set(AIERT_DIR ${CMAKE_CURRENT_BINARY_DIR}/aie-rt)
+  set(XAIENGINE_BUILD_SHARED OFF)
+  xrt_add_subdirectory(aie-rt/driver/src aie-rt)
+  # This makes aiebu submodule use aie-rt from XRT-MCDM
+  set(AIEBU_AIE_RT_BIN_DIR ${AIERT_DIR})
+  set(AIEBU_AIE_RT_HEADER_DIR ${AIERT_DIR}/include)
+  message("-- Exporting AIEBU_AIE_RT_BIN_DIR=${AIEBU_AIE_RT_BIN_DIR}")
+  message("-- Exporting AIEBU_AIE_RT_HEADER_DIR=${AIEBU_AIE_RT_HEADER_DIR}")
+endif()
+
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release" AND ${XRT_NATIVE_BUILD} STREQUAL "yes")
   xrt_add_subdirectory(doc)
 endif()
@@ -30,6 +41,7 @@ endif(XRT_ENABLE_WERROR)
 if (${XRT_NATIVE_BUILD} STREQUAL "yes")
   add_compile_options( ${XRT_WARN_OPTS} )
 endif()
+
 xrt_add_subdirectory(xdp)
 
 xrt_add_subdirectory(tools/xclbinutil)
@@ -57,6 +69,7 @@ set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic")
 set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,defs")
 
 xrt_add_subdirectory(core)
+
 
 else()
 # = WINDOWS ===================================================================
