@@ -27,6 +27,7 @@
 #include "xdp/profile/device/aie_trace/aie_trace_offload.h"
 #include "xdp/profile/device/pl_device_intf.h"
 #include "xdp/profile/plugin/aie_trace/x86/aie_trace_kernel_config.h"
+#include <unistd.h>
 
 /*
  * XRT_X86_BUILD is set only for x86 builds
@@ -173,6 +174,7 @@ bool AIETraceOffload::initReadTrace()
     // Data Mover will write input stream to this address
     uint64_t bufAddr = deviceIntf->getTraceBufDeviceAddr(buffers[i].bufId);
 
+    std::cout<<"********************************************Buf addr: "<<bufAddr<<std::endl;
     std::string msg = "Allocating trace buffer of size " + std::to_string(bufAllocSz) + " for AIE Stream " + std::to_string(i);
     xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT", msg.c_str());
 
@@ -504,6 +506,10 @@ void AIETraceOffload::continuousOffload()
     std::this_thread::sleep_for(std::chrono::microseconds(offloadIntervalUs));
   }
 
+  uint64_t simTraceTimeS = xrt_core::config::get_aie_trace_settings_sim_trace_time_s();
+  std::cout<<"******************************************** sleep provided in xrt.ini : "<<simTraceTimeS<<std::endl;
+  if(simTraceTimeS)
+    sleep(simTraceTimeS);
   // Note: This will call flush and reset on datamover
   mReadTrace(true);
   endReadTrace();
