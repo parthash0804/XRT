@@ -35,9 +35,28 @@
 #include "core/common/time.h"
 #include "core/common/config_reader.h"
 #include "core/include/experimental/xrt-next.h"
-#include "core/edge/user/shim.h"
+
+#ifdef XDP_VE2_BUILD
+  #include "shim/shim.h"
+#else
+  #include "core/edge/user/shim.h"
+#endif
 
 namespace {
+
+#ifdef XDP_VE2_BUILD
+  static void* fetchAieDevInst(void* devHandle)
+  {
+    std::cout<<"******************Inside Telluride aiestatus plugin********************"<<std::endl;
+    auto drv = aiarm::shim::handleCheck(devHandle);
+    if (!drv)
+      return nullptr ;
+    auto aieArray = drv->get_aie_array();
+    if (!aieArray)
+      return nullptr ;
+    return aieArray->get_dev();
+  }
+#else
   static void* fetchAieDevInst(void* devHandle)
   {
     auto drv = ZYNQ::shim::handleCheck(devHandle);
@@ -48,6 +67,7 @@ namespace {
       return nullptr ;
     return aieArray->get_dev();
   }
+#endif
 
   static void* allocateAieDevice(void* devHandle)
   {
