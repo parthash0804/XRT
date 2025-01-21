@@ -287,8 +287,9 @@ AIEControlConfigFiletype::getInterfaceTiles(const std::string& graphName,
         return getMicrocontrollers();
     }
 
+    std::cout<<"*************************Interface tiles*************************"<<std::endl;
     auto ios = getAllIOs();
-
+    std::cout<<"*************************ios.size(): "<<ios.size()<<"*************************"<<std::endl;
     for (auto& io : ios) {
         auto isMaster    = io.second.slaveOrMaster;
         auto streamId    = io.second.streamId;
@@ -306,36 +307,45 @@ AIEControlConfigFiletype::getInterfaceTiles(const std::string& graphName,
             && (portName.compare(currPort) != 0)
             && (portName.compare(logicalName) != 0))
             continue;
+        std::cout<<"*************************currGraph: "<<currGraph<<"*************************"<<std::endl;
         if ((graphName.compare("all") != 0)
             && (currGraph.find(graphName) == std::string::npos)
             && !useColumn)
             continue;
 
+        std::cout<<"*************************metricStr: "<<metricStr<<"*************************"<<std::endl;
+
         // Make sure it's desired polarity
         // NOTE: input = slave (data flowing from PLIO)
         //       output = master (data flowing to PLIO)
-        if ((isMaster && (metricStr.find("output") == std::string::npos)
-                && (metricStr.find("s2mm") == std::string::npos))
-            || (!isMaster && (metricStr.find("input") == std::string::npos)
-                && (metricStr.find("mm2s") == std::string::npos)))
-        {
-            // Catch metric sets that don't follow above naming convention
-            if ((metricStr != "packets") &&
-                (metricStr != METRIC_LATENCY) &&
-                (metricStr != METRIC_BYTE_COUNT))
-                continue;
+        if(metricStr.find("stream_switch") == std::string::npos){
+            std::cout<<"*************************metricStr inside: "<<metricStr<<"*************************"<<std::endl;
+            if ((isMaster && (metricStr.find("output") == std::string::npos)
+                    && (metricStr.find("s2mm") == std::string::npos))
+                || (!isMaster && (metricStr.find("input") == std::string::npos)
+                    && (metricStr.find("mm2s") == std::string::npos)))
+            {
+                // Catch metric sets that don't follow above naming convention
+                if ((metricStr != "packets") &&
+                    (metricStr != METRIC_LATENCY) &&
+                    (metricStr != METRIC_BYTE_COUNT))
+                    continue;
+            }
         }
 
+        std::cout<<"*************************column*************************"<<std::endl;
         // Make sure column is within specified range (if specified)
         if (useColumn && !((minCol <= shimCol) && (shimCol <= maxCol)))
             continue;
 
+        std::cout<<"*************************specifiedId*************************"<<std::endl;
         // Make sure stream/channel number is as specified
         // NOTE: For GMIO, we use DMA channel number; for PLIO, we use the SOUTH location
         uint8_t idToCheck = (type == io_type::GMIO) ? channelNum : streamId;
         if ((specifiedId >= 0) && (specifiedId != idToCheck))
             continue;
 
+        std::cout<<"*************************tile*************************"<<std::endl;
         tile_type tile;
         tile.col = shimCol;
         tile.row = 0;
