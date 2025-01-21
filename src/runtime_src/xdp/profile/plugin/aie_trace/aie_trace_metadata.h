@@ -98,6 +98,7 @@ class AieTraceMetadata {
     std::map<tile_type, std::string> getConfigMetrics() {return configMetrics;}
     std::map<tile_type, uint8_t> getConfigChannel0() {return configChannel0;}
     std::map<tile_type, uint8_t> getConfigChannel1() {return configChannel1;}
+    std::vector<std::pair<bool, std::string>> getStreamSwitchPorts() {return ports;}
 
     void setNumStreams(uint64_t newNumTraceStreams) {numAIETraceOutput = newNumTraceStreams;}
     void setDelayCycles(uint64_t newDelayCycles) {delayCycles = newDelayCycles;}
@@ -141,6 +142,7 @@ class AieTraceMetadata {
     std::map<tile_type, std::string> configMetrics;
     std::map<tile_type, uint8_t> configChannel0;
     std::map<tile_type, uint8_t> configChannel1;
+    std::vector<std::pair<bool, std::string>> ports;
     const aie::BaseFiletypeImpl* metadataReader = nullptr;
 
     std::map<module_type, std::string> defaultSets {
@@ -173,6 +175,7 @@ class AieTraceMetadata {
                                 "input_output_ports_stalls", "mm2s_s2mm_ports_stalls",
                                 "uc_dma_dm2mm", "uc_dma_mm2dm", "uc_axis", "uc_dma",
                                 "uc_program_flow"} }
+                                "stream_switch", "stream_switch_stalls"} }
     };
 
     std::set<std::string> gmioMetricSets {
