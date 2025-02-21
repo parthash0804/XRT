@@ -306,12 +306,10 @@ AIEControlConfigFiletype::getInterfaceTiles(const std::string& graphName,
             && (portName.compare(currPort) != 0)
             && (portName.compare(logicalName) != 0))
             continue;
-        
         if ((graphName.compare("all") != 0)
             && (currGraph.find(graphName) == std::string::npos)
             && !useColumn)
             continue;
-
 
         // Make sure it's desired polarity
         // NOTE: input = slave (data flowing from PLIO)

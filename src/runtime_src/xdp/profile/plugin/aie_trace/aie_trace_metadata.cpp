@@ -598,7 +598,7 @@ namespace xdp {
       }
 
       configMetrics[tile] = metrics[i][1];
-
+      
       // Grab channel numbers (if specified; memory tiles only)
       if (metrics[i].size() > 2) {
         try {
