@@ -299,6 +299,9 @@ namespace xdp {
     // NOTE: If partition is not used, this value is zero.
     uint8_t startColShift = metadata->getPartitionOverlayStartCols().front();
     aie::displayColShiftInfo(startColShift);
+    
+    //Get ports for stream switch metric set
+    auto streamSwitchPorts = metadata->getStreamSwitchPorts();
 
     // Zero trace event tile counts
     for (int m = 0; m < static_cast<int>(module_type::num_types); ++m) {
@@ -665,7 +668,7 @@ namespace xdp {
         // NOTE: These are events from the core module stream switch
         //       outputted on the memory module trace stream. 
         streamPorts = aie::trace::configStreamSwitchPorts(aieDevInst, tile,
-            xaieTile, loc, type, metricSet, 0, 0, memoryEvents, aieConfig);
+            xaieTile, loc, type, metricSet, 0, 0, memoryEvents, streamSwitchPorts, aieConfig);
           
         // Set overall start/end for trace capture
         if (memoryTrace->setCntrEvent(traceStartEvent, traceEndEvent) != XAIE_OK)
@@ -847,7 +850,7 @@ namespace xdp {
         aie::trace::modifyEvents(type, subtype, metricSet, channel0, interfaceEvents);
 
         streamPorts = aie::trace::configStreamSwitchPorts(aieDevInst, tile, xaieTile, loc, type, metricSet, 
-                                                          channel0, channel1, interfaceEvents, 
+                                                          channel0, channel1, interfaceEvents, streamSwitchPorts,
                                                           cfgTile->interface_tile_trace_config);
 
         // Configure interface tile trace events

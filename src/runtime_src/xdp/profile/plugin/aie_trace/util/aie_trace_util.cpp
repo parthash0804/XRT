@@ -230,7 +230,17 @@ namespace xdp::aie::trace {
          {XAIE_EVENT_PORT_RUNNING_0_PL,                     XAIE_EVENT_PORT_STALLED_0_PL,
           XAIE_EVENT_PORT_RUNNING_1_PL,                     XAIE_EVENT_PORT_STALLED_1_PL,
           XAIE_EVENT_PORT_RUNNING_2_PL,                     XAIE_EVENT_PORT_STALLED_2_PL,
-          XAIE_EVENT_PORT_RUNNING_3_PL,                     XAIE_EVENT_PORT_STALLED_3_PL}}
+          XAIE_EVENT_PORT_RUNNING_3_PL,                     XAIE_EVENT_PORT_STALLED_3_PL}},
+        {"stream_switch",
+          {XAIE_EVENT_PORT_RUNNING_0_PL,                    XAIE_EVENT_PORT_RUNNING_1_PL,
+            XAIE_EVENT_PORT_RUNNING_2_PL,                    XAIE_EVENT_PORT_RUNNING_3_PL,
+            XAIE_EVENT_PORT_RUNNING_4_PL,                    XAIE_EVENT_PORT_RUNNING_5_PL,
+            XAIE_EVENT_PORT_RUNNING_6_PL,                    XAIE_EVENT_PORT_RUNNING_7_PL,}},
+        {"stream_switch_stalls",
+          {XAIE_EVENT_PORT_RUNNING_0_PL,                    XAIE_EVENT_PORT_STALLED_0_PL,
+            XAIE_EVENT_PORT_RUNNING_1_PL,                    XAIE_EVENT_PORT_STALLED_1_PL,
+            XAIE_EVENT_PORT_RUNNING_2_PL,                    XAIE_EVENT_PORT_STALLED_2_PL,
+            XAIE_EVENT_PORT_RUNNING_3_PL,                    XAIE_EVENT_PORT_STALLED_3_PL,}}
     };
 
     if (hwGen == 1) {
@@ -433,6 +443,30 @@ namespace xdp::aie::trace {
     return eventValues;
   }
 
+   /****************************************************************************
+   * Get stream switch port type
+   ***************************************************************************/
+  StrmSwPortType getStreamSwitchPortType(std::string portName)
+  {
+    std::map<std::string, StrmSwPortType> portType;
+    portType = {
+        {"core", StrmSwPortType::CORE},
+        {"mm2s", StrmSwPortType::DMA},
+        {"s2mm", StrmSwPortType::DMA},
+        {"tile_control_rsp", StrmSwPortType::CTRL},
+        {"tile_control", StrmSwPortType::CTRL},
+        {"fifo", StrmSwPortType::FIFO},
+        {"south", StrmSwPortType::SOUTH},
+        {"west", StrmSwPortType::WEST},
+        {"north", StrmSwPortType::NORTH},
+        {"east", StrmSwPortType::EAST},
+        {"core_trace", StrmSwPortType::TRACE},
+        {"mem_trace", StrmSwPortType::TRACE},
+        {"trace", StrmSwPortType::TRACE},
+        {"uc_module", StrmSwPortType::UCTRLR},
+    };
+    return (portType.find(portName) == portType.end()) ? StrmSwPortType::SS_PORT_TYPE_MAX: portType[portName];
+  }
   /****************************************************************************
    * Check if core module event
    ***************************************************************************/
@@ -492,6 +526,34 @@ namespace xdp::aie::trace {
   uint8_t getPortNumberFromEvent(XAie_Events event)
   {
     switch (event) {
+    case XAIE_EVENT_PORT_RUNNING_7_CORE:
+    case XAIE_EVENT_PORT_STALLED_7_CORE:
+    case XAIE_EVENT_PORT_IDLE_7_CORE:
+    case XAIE_EVENT_PORT_RUNNING_7_PL:
+    case XAIE_EVENT_PORT_STALLED_7_PL:
+    case XAIE_EVENT_PORT_IDLE_7_PL:
+      return 7;
+    case XAIE_EVENT_PORT_RUNNING_6_CORE:
+    case XAIE_EVENT_PORT_STALLED_6_CORE:
+    case XAIE_EVENT_PORT_IDLE_6_CORE:
+    case XAIE_EVENT_PORT_RUNNING_6_PL:
+    case XAIE_EVENT_PORT_STALLED_6_PL:
+    case XAIE_EVENT_PORT_IDLE_6_PL:
+      return 6;
+    case XAIE_EVENT_PORT_RUNNING_5_CORE:
+    case XAIE_EVENT_PORT_STALLED_5_CORE:
+    case XAIE_EVENT_PORT_IDLE_5_CORE:
+    case XAIE_EVENT_PORT_RUNNING_5_PL:
+    case XAIE_EVENT_PORT_STALLED_5_PL:
+    case XAIE_EVENT_PORT_IDLE_5_PL:
+      return 5;
+    case XAIE_EVENT_PORT_RUNNING_4_CORE:
+    case XAIE_EVENT_PORT_STALLED_4_CORE:
+    case XAIE_EVENT_PORT_IDLE_4_CORE:
+    case XAIE_EVENT_PORT_RUNNING_4_PL:
+    case XAIE_EVENT_PORT_STALLED_4_PL:
+    case XAIE_EVENT_PORT_IDLE_4_PL:
+      return 4;
     case XAIE_EVENT_PORT_RUNNING_3_CORE:
     case XAIE_EVENT_PORT_STALLED_3_CORE:
     case XAIE_EVENT_PORT_IDLE_3_CORE:

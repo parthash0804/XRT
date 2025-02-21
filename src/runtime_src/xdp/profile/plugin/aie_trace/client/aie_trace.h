@@ -62,8 +62,7 @@ namespace xdp {
       void configStreamSwitchPorts(const tile_type& tile, const XAie_LocType loc,
                                    const module_type type, const std::string metricSet, 
                                    const uint8_t channel0, const uint8_t channel1,
-                                  std::vector<XAie_Events>& events, std::vector<std::pair<bool, std::string>> streamSwitchPorts,
-                                  aie_cfg_base& config);
+                                  std::vector<XAie_Events>& events, aie_cfg_base& config);
       std::vector<XAie_Events> configComboEvents(const XAie_LocType loc, const XAie_ModuleType mod, 
                                                  const module_type type, const std::string metricSet, 
                                                  aie_cfg_base& config);

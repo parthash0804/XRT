@@ -31,17 +31,29 @@ namespace xdp::aie::trace {
   void printTileStats(xaiefal::XAieDev* aieDevice, const tile_type& tile);
 
   /**
+   * @brief Configure ports for stream switch metric
+   * @param streamSwitchPorts Vector of pair of isMaster and port name
+   * @param switchPortRsc     Stream switch port resource
+   * @param portNum           Port number
+   * @param config            Class used to document configuration
+   * @return True if able to configure port
+   */
+  bool configPortsForStreamSwitchMetric(const std::vector<std::pair<bool, std::string>>& streamSwitchPorts,
+                                        const std::shared_ptr<xaiefal::XAieStreamPortSelect>& switchPortRsc,
+                                        const uint8_t& portNum, aie_cfg_base& config);
+  /**
    * @brief Configure stream switch monitor ports
-   * @param aieDevInst AIE device instance
-   * @param tile       Tile metadata
-   * @param xaieTile   Tile instance in FAL/resource manager
-   * @param loc        Location of tile
-   * @param type       Module/tile type
-   * @param metricSet  Name of requested metric set
-   * @param channel0   First specified channel number
-   * @param channel1   Second specified channel number
-   * @param events     Vector of original events in metric set
-   * @param config     Class used to document configuration
+   * @param aieDevInst         AIE device instance
+   * @param tile              Tile metadata
+   * @param xaieTile          Tile instance in FAL/resource manager
+   * @param loc               Location of tile
+   * @param type              Module/tile type
+   * @param metricSet         Name of requested metric set
+   * @param channel0          First specified channel number
+   * @param channel1          Second specified channel number
+   * @param events            Vector of original events in metric set
+   * @param streamSwitchPorts Vector of pair of isMaster and port name
+   * @param config            Class used to document configuration
    * @return Vector of stream switch monitor ports used
    */
   std::vector<std::shared_ptr<xaiefal::XAieStreamPortSelect>>
@@ -49,7 +61,9 @@ namespace xdp::aie::trace {
                           xaiefal::XAieTile& xaieTile, const XAie_LocType loc,
                           const module_type type, const std::string metricSet, 
                           const uint8_t channel0, const uint8_t channel1,
-                          std::vector<XAie_Events>& events, aie_cfg_base& config);
+                          std::vector<XAie_Events>& events,
+                          std::vector<std::pair<bool, std::string>> streamSwitchPorts,
+                          aie_cfg_base& config);
 
   /**
    * @brief Configure combo events (AIE tiles only)

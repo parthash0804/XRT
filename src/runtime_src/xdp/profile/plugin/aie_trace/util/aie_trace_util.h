@@ -117,6 +117,14 @@ namespace xdp::aie::trace {
   std::vector<uint32_t> getMemoryCounterEventValues(int hwGen, std::string scheme);
 
   /**
+   * @brief  Get stream switch port type
+   * @param  portName  Port Name for which port type is requested
+   * @return Port type associated with given port name
+   *        ( StrmSwPortType::UNKNOWN if port name not found)
+   */
+  StrmSwPortType getStreamSwitchPortType(std::string portName);
+
+  /**
    * @brief  Check if metric set contains DMA events
    * @param  metricSet Name of requested metric set
    * @return True if given metric set contains DMA event(s)

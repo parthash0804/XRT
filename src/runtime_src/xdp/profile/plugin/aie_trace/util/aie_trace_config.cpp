@@ -84,6 +84,45 @@ namespace xdp::aie::trace {
   }
 
   /****************************************************************************
+   * Configure stream switch event ports for monitoring purposes for stream switch metric sets
+   ***************************************************************************/
+  bool configPortsForStreamSwitchMetric(const std::vector<std::pair<bool, std::string>>& streamSwitchPorts,
+                                        const std::shared_ptr<xaiefal::XAieStreamPortSelect>& switchPortRsc,
+                                        const uint8_t& portNum, aie_cfg_base& config)
+  {
+    bool isMaster = streamSwitchPorts.at(portNum).first;
+    auto slaveOrMaster = isMaster ? XAIE_STRMSW_MASTER : XAIE_STRMSW_SLAVE;
+    std::string portName = streamSwitchPorts.at(portNum).second;
+    size_t pos = portName.find_first_of("0123456789");
+    std::string sPort = portName.substr(0, pos);
+    std::string sPortId = portName.substr(pos);
+    uint8_t streamPortId = static_cast<uint8_t>(sPortId.empty() ? 0 : std::stoi(sPortId));
+    
+    StrmSwPortType port = getStreamSwitchPortType(sPort);
+    if (port == StrmSwPortType::SS_PORT_TYPE_MAX) {
+      std::string msg = "Invalid stream switch port " + sPort + ". Hence. ignored";
+      xrt_core::message::send(severity_level::warning, "XRT", msg);
+      return false;
+    }
+    else if (port == StrmSwPortType::TRACE) {
+      std::string msg = "Stream switch port type " + sPort + " is not supported for monitoring."
+                        + "It will generate recursive infinite trace. Hence, ignored";
+      xrt_core::message::send(severity_level::warning, "XRT", msg);
+      return false;
+    }
+    std::string typeName = isMaster ? "master" : "slave";
+    std::string msg = "Configuring stream switch to monitor " 
+                    + typeName + " port with stream ID of " + sPortId + " and port " + sPort;
+    xrt_core::message::send(severity_level::debug, "XRT", msg);
+    
+    switchPortRsc->setPortToSelect(slaveOrMaster, port, streamPortId);
+
+    config.port_trace_is_master[portNum] = isMaster;
+    config.port_names[portNum] = portName;
+    return true;
+  }
+  
+  /****************************************************************************
    * Configure stream switch event ports for monitoring purposes
    ***************************************************************************/
   std::vector<std::shared_ptr<xaiefal::XAieStreamPortSelect>>
@@ -91,7 +130,9 @@ namespace xdp::aie::trace {
                           xaiefal::XAieTile& xaieTile, const XAie_LocType loc,
                           const module_type type, const std::string metricSet,
                           const uint8_t channel0, const uint8_t channel1, 
-                          std::vector<XAie_Events>& events, aie_cfg_base& config)
+                          std::vector<XAie_Events>& events, 
+                          const std::vector<std::pair<bool, std::string>>& streamSwitchPorts,
+                          aie_cfg_base& config)
   {
     std::vector<std::shared_ptr<xaiefal::XAieStreamPortSelect>> streamPorts;
     std::map<uint8_t, std::shared_ptr<xaiefal::XAieStreamPortSelect>> switchPortMap;
@@ -137,27 +178,33 @@ namespace xdp::aie::trace {
         }
         // Interface tiles (e.g., PLIO, GMIO)
         else if (type == module_type::shim) {
-          // NOTE: skip configuration of extra ports for tile if stream_ids are not available.
-          if (portnum >= tile.stream_ids.size())
-            continue;
+          if((metricSet.find("stream_switch") != std::string::npos)) {
+            if(!configPortsForStreamSwitchMetric(streamSwitchPorts, switchPortRsc, portnum, config)) 
+              continue;
+          }
+          else {
+            // NOTE: skip configuration of extra ports for tile if stream_ids are not available.
+            if (portnum >= tile.stream_ids.size())
+              continue;
 
-          auto slaveOrMaster = (tile.is_master_vec.at(portnum) == 0)   ? XAIE_STRMSW_SLAVE : XAIE_STRMSW_MASTER;
-          std::string typeName = (tile.is_master_vec.at(portnum) == 0) ? "slave" : "master";
-          uint8_t streamPortId = static_cast<uint8_t>(tile.stream_ids.at(portnum));
+            auto slaveOrMaster = (tile.is_master_vec.at(portnum) == 0)   ? XAIE_STRMSW_SLAVE : XAIE_STRMSW_MASTER;
+            std::string typeName = (tile.is_master_vec.at(portnum) == 0) ? "slave" : "master";
+            uint8_t streamPortId = static_cast<uint8_t>(tile.stream_ids.at(portnum));
 
-          std::string msg = "Configuring interface tile stream switch to monitor " 
-                          + typeName + " stream port " + std::to_string(streamPortId);
-          xrt_core::message::send(severity_level::debug, "XRT", msg);
-          switchPortRsc->setPortToSelect(slaveOrMaster, SOUTH, streamPortId);
+            std::string msg = "Configuring interface tile stream switch to monitor " 
+                            + typeName + " stream port " + std::to_string(streamPortId);
+            xrt_core::message::send(severity_level::debug, "XRT", msg);
+            switchPortRsc->setPortToSelect(slaveOrMaster, SOUTH, streamPortId);
 
-          // Record for runtime config file
-          config.port_trace_ids[portnum] = (tile.subtype == io_type::PLIO) ? portnum : channel;
-          config.port_trace_is_master[portnum] = (tile.is_master_vec.at(portnum) != 0);
+            // Record for runtime config file
+            config.port_trace_ids[portnum] = (tile.subtype == io_type::PLIO) ? portnum : channel;
+            config.port_trace_is_master[portnum] = (tile.is_master_vec.at(portnum) != 0);
 
-          if (tile.is_master_vec.at(portnum) == 0)
-            config.mm2s_channels[channelNum] = channel;
-          else
-            config.s2mm_channels[channelNum] = channel;
+            if (tile.is_master_vec.at(portnum) == 0)
+              config.mm2s_channels[channelNum] = channel;
+            else
+              config.s2mm_channels[channelNum] = channel;
+          }
         }
         else {
           // Memory tiles

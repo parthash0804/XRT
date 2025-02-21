@@ -853,18 +853,18 @@ namespace xdp {
           if(ports.size()>8)
           {
             xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 8 ports can be specified for stream_switch metric setting. Picking first 8 ports, ignoring the rest.");
+                                "Maximum of 8 ports can be specified for stream_switch metric setting. Tracing first 8 ports, ignoring the rest.");
             
             size_t extraPorts = ports.size() - 8;
             ports.erase(ports.end() - extraPorts, ports.end());
           }
         }
-        else if(metrics[i][1].compare("stream_switch_stall") == 0)
+        else if(metrics[i][1].compare("stream_switch_stalls") == 0)
         {
           if(ports.size()>4)
           {
             xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 4 ports can be specified for stream_switch_stall metric setting. Picking first 4 ports, ignoring the rest.");
+                                "Maximum of 4 ports can be specified for stream_switch_stalls metric setting. Tracing first 4 ports, ignoring the rest.");
             
             size_t extraPorts = ports.size() - 4;
             ports.erase(ports.end() - extraPorts, ports.end());
@@ -962,18 +962,18 @@ namespace xdp {
           if(ports.size()>8)
           {
             xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 8 ports can be specified for stream_switch metric setting. Picking first 8 ports, ignoring the rest.");
+                                "Maximum of 8 ports can be specified for stream_switch metric setting. Tracing first 8 ports, ignoring the rest.");
             
             size_t extraPorts = ports.size() - 8;
             ports.erase(ports.end() - extraPorts, ports.end());
           }
         }
-        else if(metrics[i][2].compare("stream_switch_stall") == 0)
+        else if(metrics[i][2].compare("stream_switch_stalls") == 0)
         {
           if(ports.size()>4)
           {
             xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 4 ports can be specified for stream_switch_stall metric setting. Picking first 4 ports, ignoring the rest.");
+                                "Maximum of 4 ports can be specified for stream_switch_stalls metric setting. Tracing first 4 ports, ignoring the rest.");
             
             size_t extraPorts = ports.size() - 4;
             ports.erase(ports.end() - extraPorts, ports.end());
@@ -1078,18 +1078,18 @@ namespace xdp {
             if(ports.size()>8)
             {
               xrt_core::message::send(severity_level::warning, "XRT",
-                                  "Maximum of 8 ports can be specified for stream_switch metric setting. Picking first 8 ports, ignoring the rest.");
+                                  "Maximum of 8 ports can be specified for stream_switch metric setting. Tracing first 8 ports, ignoring the rest.");
               
               size_t extraPorts = ports.size() - 8;
               ports.erase(ports.end() - extraPorts, ports.end());
             }
           }
-          else if(metrics[i][1].compare("stream_switch_stall") == 0)
+          else if(metrics[i][1].compare("stream_switch_stalls") == 0)
           {
             if(ports.size()>4)
             {
               xrt_core::message::send(severity_level::warning, "XRT",
-                                  "Maximum of 4 ports can be specified for stream_switch_stall metric setting. Picking first 4 ports, ignoring the rest.");
+                                  "Maximum of 4 ports can be specified for stream_switch_stalls metric setting. Tracing first 4 ports, ignoring the rest.");
               
               size_t extraPorts = ports.size() - 4;
               ports.erase(ports.end() - extraPorts, ports.end());
