@@ -313,6 +313,7 @@ namespace xdp {
               bpt::ptree port1;
               bpt::ptree port2;
               bpt::ptree port3;
+              
               port1.put("", tile_trace_config.port_trace_ids[i]);
               port2.put("", tile_trace_config.port_trace_is_master[i]);
               port3.put("", tile_trace_config.port_names[i]);

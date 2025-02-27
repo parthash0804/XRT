@@ -50,6 +50,8 @@ class AieTraceMetadata {
                                   module_type type);
     void getConfigMetricsForInterfaceTiles(const std::vector<std::string>& metricsSettings,
                                            const std::vector<std::string> graphMetricsSettings);
+    bool parseStreamSwitchMetric(const std::vector<std::string>& metric, 
+                                 const uint8_t& metricNameIndex);
     xdp::aie::driver_config getAIEConfigMetadata();
 
    public:
@@ -116,6 +118,10 @@ class AieTraceMetadata {
 
     bool isGMIOMetric(const std::string& metric) const {
       return gmioMetricSets.find(metric) != gmioMetricSets.end();
+    }
+
+    bool isStreamSwitchMetric(const std::string& metric) const {
+      return metric.find("stream_switch") != std::string::npos;
     }
     bool configMetricsEmpty() const { return configMetrics.empty(); }
 

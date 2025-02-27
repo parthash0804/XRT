@@ -95,10 +95,10 @@ namespace xdp::aie::trace {
     std::string portName = streamSwitchPorts.at(portNum).second;
     size_t pos = portName.find_first_of("0123456789");
     std::string sPort = portName.substr(0, pos);
-    std::string sPortId = portName.substr(pos);
-    uint8_t streamPortId = static_cast<uint8_t>(sPortId.empty() ? 0 : std::stoi(sPortId));
+    std::string sPortId = (pos == std::string::npos) ? "0" : portName.substr(pos);
+    uint8_t streamPortId = static_cast<uint8_t>(std::stoi(sPortId));
     
-    StrmSwPortType port = getStreamSwitchPortType(sPort);
+    auto port = getStreamSwitchPortType(sPort);
     if (port == StrmSwPortType::SS_PORT_TYPE_MAX) {
       std::string msg = "Invalid stream switch port " + sPort + ". Hence. ignored";
       xrt_core::message::send(severity_level::warning, "XRT", msg);
@@ -106,7 +106,7 @@ namespace xdp::aie::trace {
     }
     else if (port == StrmSwPortType::TRACE) {
       std::string msg = "Stream switch port type " + sPort + " is not supported for monitoring."
-                        + "It will generate recursive infinite trace. Hence, ignored";
+                        + "It will generate infinite trace. Hence, ignored";
       xrt_core::message::send(severity_level::warning, "XRT", msg);
       return false;
     }
@@ -158,28 +158,38 @@ namespace xdp::aie::trace {
         switchPortMap[portnum] = switchPortRsc;
 
         if (type == module_type::core) {
+          if(metricSet.find("stream_switch") != std::string::npos) {
+            if(portnum >= streamSwitchPorts.size()) 
+              break;
+            if(configPortsForStreamSwitchMetric(streamSwitchPorts, switchPortRsc, portnum, config) == false) 
+              continue;
+          }
+          else {
           // AIE Tiles - Monitor DMA channels
-          bool isMaster = ((portnum >= 2) || (metricSet.find("s2mm") != std::string::npos));
-          auto slaveOrMaster = isMaster ? XAIE_STRMSW_MASTER : XAIE_STRMSW_SLAVE;
-          std::string typeName = isMaster ? "S2MM" : "MM2S";
-          std::string msg = "Configuring core module stream switch to monitor DMA " 
-                          + typeName + " channel " + std::to_string(channelNum);
-          xrt_core::message::send(severity_level::debug, "XRT", msg);
-          switchPortRsc->setPortToSelect(slaveOrMaster, DMA, channelNum);
+            bool isMaster = ((portnum >= 2) || (metricSet.find("s2mm") != std::string::npos));
+            auto slaveOrMaster = isMaster ? XAIE_STRMSW_MASTER : XAIE_STRMSW_SLAVE;
+            std::string typeName = isMaster ? "S2MM" : "MM2S";
+            std::string msg = "Configuring core module stream switch to monitor DMA " 
+                            + typeName + " channel " + std::to_string(channelNum);
+            xrt_core::message::send(severity_level::debug, "XRT", msg);
+            switchPortRsc->setPortToSelect(slaveOrMaster, DMA, channelNum);
 
-          // Record for runtime config file
-          // NOTE: channel info informs back-end there will be events on that channel
-          config.port_trace_ids[portnum] = channelNum;
-          config.port_trace_is_master[portnum] = isMaster;
-          if (isMaster)
-            config.s2mm_channels[channelNum] = channelNum;
-          else
-            config.mm2s_channels[channelNum] = channelNum;
+            // Record for runtime config file
+            // NOTE: channel info informs back-end there will be events on that channel
+            config.port_trace_ids[portnum] = channelNum;
+            config.port_trace_is_master[portnum] = isMaster;
+            if (isMaster)
+              config.s2mm_channels[channelNum] = channelNum;
+            else
+              config.mm2s_channels[channelNum] = channelNum;
+          }
         }
         // Interface tiles (e.g., PLIO, GMIO)
         else if (type == module_type::shim) {
-          if((metricSet.find("stream_switch") != std::string::npos)) {
-            if(!configPortsForStreamSwitchMetric(streamSwitchPorts, switchPortRsc, portnum, config)) 
+          if(metricSet.find("stream_switch") != std::string::npos) {
+            if(portnum >= streamSwitchPorts.size()) 
+              break;
+            if(configPortsForStreamSwitchMetric(streamSwitchPorts, switchPortRsc, portnum, config) == false) 
               continue;
           }
           else {
@@ -208,16 +218,24 @@ namespace xdp::aie::trace {
         }
         else {
           // Memory tiles
-          auto slaveOrMaster = isInputSet(type, metricSet) ? XAIE_STRMSW_MASTER : XAIE_STRMSW_SLAVE;
-          std::string typeName = (slaveOrMaster == XAIE_STRMSW_MASTER) ? "master" : "slave";
-          std::string msg = "Configuring memory tile stream switch to monitor " 
-                          + typeName + " stream port " + std::to_string(channel);
-          xrt_core::message::send(severity_level::debug, "XRT", msg);
-          switchPortRsc->setPortToSelect(slaveOrMaster, DMA, channel);
+          if(metricSet.find("stream_switch") != std::string::npos) {
+            if(portnum >= streamSwitchPorts.size()) 
+              break;
+            if(configPortsForStreamSwitchMetric(streamSwitchPorts, switchPortRsc, portnum, config) == false) 
+              continue;
+          }
+          else {
+            auto slaveOrMaster = isInputSet(type, metricSet) ? XAIE_STRMSW_MASTER : XAIE_STRMSW_SLAVE;
+            std::string typeName = (slaveOrMaster == XAIE_STRMSW_MASTER) ? "master" : "slave";
+            std::string msg = "Configuring memory tile stream switch to monitor " 
+                            + typeName + " stream port " + std::to_string(channel);
+            xrt_core::message::send(severity_level::debug, "XRT", msg);
+            switchPortRsc->setPortToSelect(slaveOrMaster, DMA, channel);
 
-          // Record for runtime config file
-          config.port_trace_ids[portnum] = channel;
-          config.port_trace_is_master[portnum] = (slaveOrMaster == XAIE_STRMSW_MASTER);
+            // Record for runtime config file
+            config.port_trace_ids[portnum] = channel;
+            config.port_trace_is_master[portnum] = (slaveOrMaster == XAIE_STRMSW_MASTER);
+          }
         }
       }
 

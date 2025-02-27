@@ -453,8 +453,12 @@ namespace xdp {
         configMetrics[e] = metrics[i][1];
       }
 
+      if (isStreamSwitchMetric(metrics[i][1])) {
+        if(parseStreamSwitchMetric(metrics[i], 1) == false)
+          continue;
+      }
       // Grab channel numbers (if specified; memory tiles only)
-      if (metrics[i].size() > 2) {
+      else if (metrics[i].size() > 2) {
         try {
           for (auto &e : tiles) {
             configChannel0[e] = aie::convertStringToUint8(metrics[i][2]);
@@ -513,7 +517,11 @@ namespace xdp {
 
       uint8_t channel0 = 0;
       uint8_t channel1 = 1;
-      if (metrics[i].size() > 3) {
+      if (isStreamSwitchMetric(metrics[i][2])) {
+        if(parseStreamSwitchMetric(metrics[i], 2) == false)
+          continue;
+      }
+      else if (metrics[i].size() > 3) {
         try {
           channel0 = aie::convertStringToUint8(metrics[i][3]);
           channel1 = aie::convertStringToUint8(metrics[i].back());
@@ -599,8 +607,12 @@ namespace xdp {
 
       configMetrics[tile] = metrics[i][1];
       
+      if (isStreamSwitchMetric(metrics[i][1])) {
+        if(parseStreamSwitchMetric(metrics[i], 1) == false)
+          continue;
+      }
       // Grab channel numbers (if specified; memory tiles only)
-      if (metrics[i].size() > 2) {
+      else if (metrics[i].size() > 2) {
         try {
           configChannel0[tile] = aie::convertStringToUint8(metrics[i][2]);
           configChannel1[tile] = aie::convertStringToUint8(metrics[i].back());
@@ -811,65 +823,9 @@ namespace xdp {
       uint8_t channelId0 = 0;
       uint8_t channelId1 = 1;
 
-      if (metrics[i][1].find("stream_switch") != std::string::npos)
-      {
-        if(metrics[i].size() & 1)  //odd number of elements
-        {
-          xrt_core::message::send(severity_level::warning, "XRT",
-                                "Incorrect format specified for stream_switch metric setting.");
+      if (isStreamSwitchMetric(metrics[i][1])) {
+        if(parseStreamSwitchMetric(metrics[i], 1) == false)
           continue;
-        }
-        else if(metrics[i].size() == 2)
-        {
-          xrt_core::message::send(severity_level::warning, "XRT",
-                                "No ports specified for stream_switch metric setting.");
-          continue;
-        }
-
-        //even ind = master/slave
-        //odd ind = Physical port name (e.g south2, north1)
-        bool inCorrectFormat = false;
-        for(uint8_t ind= 2; ind < metrics[i].size(); ind+=2)
-        {
-          if(metrics[i][ind].compare("master") != 0 && (metrics[i][ind].compare("slave") != 0))
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                "Incorrect format specified for stream_switch metric setting.");
-            inCorrectFormat=true;
-            break;
-          }
-          bool isMaster = (metrics[i][ind] == "master") ? true : false;
-          ports.push_back({isMaster, metrics[i][ind+1]});
-        }
-
-        if(inCorrectFormat)
-        {
-          ports.clear();
-          continue;
-        }
-
-        if(metrics[i][1].compare("stream_switch") == 0)
-        {
-          if(ports.size()>8)
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 8 ports can be specified for stream_switch metric setting. Tracing first 8 ports, ignoring the rest.");
-            
-            size_t extraPorts = ports.size() - 8;
-            ports.erase(ports.end() - extraPorts, ports.end());
-          }
-        }
-        else if(metrics[i][1].compare("stream_switch_stalls") == 0)
-        {
-          if(ports.size()>4)
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 4 ports can be specified for stream_switch_stalls metric setting. Tracing first 4 ports, ignoring the rest.");
-            
-            size_t extraPorts = ports.size() - 4;
-            ports.erase(ports.end() - extraPorts, ports.end());
-          }
-        }
       }
       else if (metrics[i].size() > 2) {
         foundChannels = true;
@@ -919,66 +875,9 @@ namespace xdp {
       bool foundChannels = false;
       uint8_t channelId0 = 0;
       uint8_t channelId1 = 1;
-      if (metrics[i][2].find("stream_switch") != std::string::npos)
-      {
-        if((metrics[i].size() & 1) == 0)  //even number of elements
-        {
-          xrt_core::message::send(severity_level::warning, "XRT",
-                                "Incorrect format specified for stream_switch metric setting.");
+      if (isStreamSwitchMetric(metrics[i][2])) {
+        if(parseStreamSwitchMetric(metrics[i], 2) == false)
           continue;
-        }
-        else if(metrics[i].size() == 3)
-        {
-          xrt_core::message::send(severity_level::warning, "XRT",
-                                "No ports specified for stream_switch metric setting.");
-          continue;
-        }
-
-        //odd ind = master/slave
-        //even ind = Physical port name (e.g south2, north1)
-        bool inCorrectFormat = false;
-        for(uint8_t ind= 3; ind < metrics[i].size(); ind+=2)
-        {
-          if(metrics[i][ind].compare("master") != 0 && (metrics[i][ind].compare("slave") != 0))
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                "Incorrect format specified for stream_switch metric setting.");
-            inCorrectFormat=true;
-            break;
-          }
-          bool isMaster = (metrics[i][ind] == "master") ? true : false;
-          ports.push_back({isMaster, metrics[i][ind+1]});
-        }
-        
-        if(inCorrectFormat)
-        {
-          ports.clear();
-          continue;
-        }
-
-
-        if(metrics[i][2].compare("stream_switch") == 0)
-        {
-          if(ports.size()>8)
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 8 ports can be specified for stream_switch metric setting. Tracing first 8 ports, ignoring the rest.");
-            
-            size_t extraPorts = ports.size() - 8;
-            ports.erase(ports.end() - extraPorts, ports.end());
-          }
-        }
-        else if(metrics[i][2].compare("stream_switch_stalls") == 0)
-        {
-          if(ports.size()>4)
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                "Maximum of 4 ports can be specified for stream_switch_stalls metric setting. Tracing first 4 ports, ignoring the rest.");
-            
-            size_t extraPorts = ports.size() - 4;
-            ports.erase(ports.end() - extraPorts, ports.end());
-          }
-        }
       }
       else if (metrics[i].size() >= 4) {
         try {
@@ -1036,65 +935,9 @@ namespace xdp {
         bool foundChannels = false;
         uint8_t channelId0 = 0;
         uint8_t channelId1 = 1;
-        if (metrics[i][1].find("stream_switch") != std::string::npos)
-        {
-          if(metrics[i].size() & 1)  //odd number of elements
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                  "Incorrect format specified for stream_switch metric setting.");
+        if (isStreamSwitchMetric(metrics[i][1])) {
+          if(parseStreamSwitchMetric(metrics[i], 1) == false)
             continue;
-          }
-          else if(metrics[i].size() == 2)
-          {
-            xrt_core::message::send(severity_level::warning, "XRT",
-                                  "No ports specified for stream_switch metric setting.");
-            continue;
-          }
-
-          //even ind = master/slave
-          //odd ind = Physical port name (e.g south2, north1)
-          bool inCorrectFormat = false;
-          for(uint8_t ind= 2; ind < metrics[i].size(); ind+=2)
-          {
-            if(metrics[i][ind].compare("master") != 0 && (metrics[i][ind].compare("slave") != 0))
-            {
-              xrt_core::message::send(severity_level::warning, "XRT",
-                                  "Incorrect format specified for stream_switch metric setting.");
-              inCorrectFormat=true;
-              break;
-            }
-            bool isMaster = (metrics[i][ind] == "master") ? true : false;
-            ports.push_back({isMaster, metrics[i][ind+1]});
-          }
-
-          if(inCorrectFormat)
-          {
-            ports.clear();
-            continue;
-          }
-
-          if(metrics[i][1].compare("stream_switch") == 0)
-          {
-            if(ports.size()>8)
-            {
-              xrt_core::message::send(severity_level::warning, "XRT",
-                                  "Maximum of 8 ports can be specified for stream_switch metric setting. Tracing first 8 ports, ignoring the rest.");
-              
-              size_t extraPorts = ports.size() - 8;
-              ports.erase(ports.end() - extraPorts, ports.end());
-            }
-          }
-          else if(metrics[i][1].compare("stream_switch_stalls") == 0)
-          {
-            if(ports.size()>4)
-            {
-              xrt_core::message::send(severity_level::warning, "XRT",
-                                  "Maximum of 4 ports can be specified for stream_switch_stalls metric setting. Tracing first 4 ports, ignoring the rest.");
-              
-              size_t extraPorts = ports.size() - 4;
-              ports.erase(ports.end() - extraPorts, ports.end());
-            }
-          }
         }
         else if (metrics[i].size() >= 3) {
           try {
@@ -1176,6 +1019,69 @@ namespace xdp {
     for (auto& t : offTiles) {
       configMetrics.erase(t);
     }
+  }
+
+  bool AieTraceMetadata::parseStreamSwitchMetric(const std::vector<std::string>& metric, const uint8_t& metricNameIndex)
+  {
+    size_t subMetricSize = metric.size() - metricNameIndex  + 1;
+    if(subMetricSize & 1)  //combination should always be even- <slave/master>:<port>
+    {
+      xrt_core::message::send(severity_level::warning, "XRT",
+                            "Incorrect format specified for " + metric[metricNameIndex] + " metric setting.");
+      return false;
+    }
+    else if(metric.size() == metricNameIndex + 1)
+    {
+      xrt_core::message::send(severity_level::warning, "XRT",
+                            "No ports specified for " + metric[metricNameIndex] + " metric setting.");
+      return false;
+    }
+
+    //ind = master/slave
+    //ind + 1 = Physical port name (e.g south2, north1)
+    bool inCorrectFormat = false;
+    for(uint8_t ind= metricNameIndex + 1; ind < metric.size(); ind+=2)
+    {
+      if(metric[ind].compare("master") != 0 && (metric[ind].compare("slave") != 0))
+      {
+        xrt_core::message::send(severity_level::warning, "XRT",
+                            "Incorrect format specified for " + metric[metricNameIndex] + " metric setting.");
+        inCorrectFormat=true;
+        break;
+      }
+      bool isMaster = (metric[ind] == "master") ? true : false;
+      ports.push_back({isMaster, metric[ind+1]});
+    }
+
+    if(inCorrectFormat)
+    {
+      ports.clear();
+      return false;
+    }
+
+    if(metric[metricNameIndex].compare("stream_switch") == 0)
+    {
+      if(ports.size()>8)
+      {
+        xrt_core::message::send(severity_level::warning, "XRT",
+                            "Maximum of 8 ports can be specified for stream_switch metric setting. Tracing first 8 ports, ignoring the rest.");
+        
+        size_t extraPorts = ports.size() - 8;
+        ports.erase(ports.end() - extraPorts, ports.end());
+      }
+    }
+    else if(metric[metricNameIndex].compare("stream_switch_stalls") == 0)
+    {
+      if(ports.size()>4)
+      {
+        xrt_core::message::send(severity_level::warning, "XRT",
+                            "Maximum of 4 ports can be specified for stream_switch_stalls metric setting. Tracing first 4 ports, ignoring the rest.");
+        
+        size_t extraPorts = ports.size() - 4;
+        ports.erase(ports.end() - extraPorts, ports.end());
+      }
+    }
+    return true;
   }
 
   aie::driver_config 
