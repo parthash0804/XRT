@@ -22,13 +22,18 @@
 #include "core/include/xrt.h"
 #include "core/common/message.h"
 #include "core/include/xrt/xrt_kernel.h"
+#include "core/common/shim/hwctx_handle.h"
+#include "core/include/xrt/xrt_hw_context.h"
+#include "core/common/api/hw_context_int.h"
+#include "shim/xdna_hwctx.h"
+#include "shim/xdna_aie_array.h"
 #include "xdp/profile/database/database.h"
 #include "xdp/profile/database/static_info/aie_constructs.h"
 #include "xdp/profile/device/aie_trace/ve2/aie_trace_logger_ve2.h"
 #include "xdp/profile/device/aie_trace/ve2/aie_trace_offload_ve2.h"
 #include "xdp/profile/device/pl_device_intf.h"
 #include "xdp/profile/plugin/aie_trace/x86/aie_trace_kernel_config.h"
-#include "shim/shim.h"
+// #include "shim/shim.h"
 
 #include <unistd.h>
 #include <sys/mman.h>
@@ -47,8 +52,7 @@ AIETraceOffload::AIETraceOffload
   , uint64_t totalSize
   , uint64_t numStrm
   )
-  : deviceHandle(handle)
-  , deviceId(id)
+  : deviceId(id)
   , deviceIntf(dInt)
   , traceLogger(logger)
   , isPLIO(isPlio)
@@ -60,6 +64,7 @@ AIETraceOffload::AIETraceOffload
   , offloadStatus(AIEOffloadThreadStatus::IDLE)
   , mEnCircularBuf(false)
   , mCircularBufOverwrite(false)
+  , m_hwcontext(xrt_core::hw_context_int::create_hw_context_from_implementation(handle))
 {
   bufAllocSz = deviceIntf->getAlignedTraceBufSize(totalSz, static_cast<unsigned int>(numStream));
 
@@ -79,8 +84,9 @@ AIETraceOffload::~AIETraceOffload()
 
 bool AIETraceOffload::setupPSKernel() {
 
-  auto spdevice = xrt_core::get_userpf_device(deviceHandle);
-  auto device = xrt::device(spdevice);
+  // auto spdevice = xrt_core::get_userpf_device(deviceHandle);
+  // auto device = xrt::device(spdevice);
+  auto device = m_hwcontext.get_device();
   auto uuid = device.get_xclbin_uuid();
   auto gmio_kernel = xrt::kernel(device, uuid.get(), "aie_trace_gmio");
 
@@ -174,13 +180,15 @@ bool AIETraceOffload::initReadTrace()
       VPDatabase* db = VPDatabase::Instance();
       TraceGMIO*  traceGMIO = (db->getStaticInfo()).getTraceGMIO(deviceId, i);
 
-      auto drv = aiarm::shim::handleCheck(deviceHandle);
-      if(!drv) {
-        bufferInitialized = false;
-        return bufferInitialized;
-      }
-      auto aieObj = drv->get_aie_array();
-
+      // auto drv = aiarm::shim::handleCheck(deviceHandle);
+      // if(!drv) {
+      //   bufferInitialized = false;
+      //   return bufferInitialized;
+      // }
+      // auto aieObj = drv->get_aie_array();
+      auto hwctx_hdl = static_cast<xrt_core::hwctx_handle*>(m_hwcontext);
+      auto hwctx_obj = dynamic_cast<shim_xdna_edge::xdna_hwctx*>(hwctx_hdl);
+      auto aieObj = hwctx_obj->get_aie_array();
       XAie_DevInst* devInst = aieObj->get_dev();
 
       gmioDMAInsts[i].gmioTileLoc = XAie_TileLoc(traceGMIO->shimColumn, 0);
@@ -241,10 +249,16 @@ void AIETraceOffload::endReadTrace()
     VPDatabase* db = VPDatabase::Instance();
     TraceGMIO*  traceGMIO = (db->getStaticInfo()).getTraceGMIO(deviceId, i);
 
-    auto drv = aiarm::shim::handleCheck(deviceHandle);
-    if (!drv)
-      return;
-    auto aieObj = drv->get_aie_array();
+    // auto drv = aiarm::shim::handleCheck(deviceHandle);
+    // if (!drv)
+    //   return;
+    // auto aieObj = drv->get_aie_array();
+    // XAie_DevInst* devInst = aieObj->get_dev();
+
+    auto hwctx_hdl = static_cast<xrt_core::hwctx_handle*>(m_hwcontext);
+    auto hwctx_obj = dynamic_cast<shim_xdna_edge::xdna_hwctx*>(hwctx_hdl);
+    auto aieObj = hwctx_obj->get_aie_array();
+
     XAie_DevInst* devInst = aieObj->get_dev();
 
     // channelNumber: (0-S2MM0,1-S2MM1,2-MM2S0,3-MM2S1)
@@ -464,7 +478,7 @@ void AIETraceOffload::startOffload()
   if (offloadStatus == AIEOffloadThreadStatus::RUNNING)
     return;
 
-  std::lock_guard<std::mutex> lock(statusLock);
+  // std::lock_guard<std::mutex> lock(statusLock);
   offloadStatus = AIEOffloadThreadStatus::RUNNING;
 
   offloadThread = std::thread(&AIETraceOffload::continuousOffload, this);
@@ -477,7 +491,7 @@ void AIETraceOffload::continuousOffload()
     return;
   }
 
-  while (keepOffloading()) {
+  while (AIEOffloadThreadStatus::RUNNING == offloadStatus) {
     mReadTrace(false);
     std::this_thread::sleep_for(std::chrono::microseconds(offloadIntervalUs));
   }
@@ -488,15 +502,15 @@ void AIETraceOffload::continuousOffload()
   offloadFinished();
 }
 
-bool AIETraceOffload::keepOffloading()
-{
-  std::lock_guard<std::mutex> lock(statusLock);
-  return (AIEOffloadThreadStatus::RUNNING == offloadStatus);
-}
+// bool AIETraceOffload::keepOffloading()
+// {
+//   std::lock_guard<std::mutex> lock(statusLock);
+//   return (AIEOffloadThreadStatus::RUNNING == offloadStatus);
+// }
 
 void AIETraceOffload::stopOffload()
 {
-  std::lock_guard<std::mutex> lock(statusLock);
+  // std::lock_guard<std::mutex> lock(statusLock);
   if (AIEOffloadThreadStatus::STOPPED == offloadStatus)
     return;
   offloadStatus = AIEOffloadThreadStatus::STOPPING;
@@ -504,9 +518,9 @@ void AIETraceOffload::stopOffload()
 
 void AIETraceOffload::offloadFinished()
 {
-  std::lock_guard<std::mutex> lock(statusLock);
-  if (AIEOffloadThreadStatus::STOPPED == offloadStatus)
-    return;
+  // std::lock_guard<std::mutex> lock(statusLock);
+  // if (AIEOffloadThreadStatus::STOPPED == offloadStatus)
+  //   return;
   offloadStatus = AIEOffloadThreadStatus::STOPPED;
 }
 

@@ -107,6 +107,10 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
 #ifdef XDP_CLIENT_BUILD
   xrt::hw_context context = xrt_core::hw_context_int::create_hw_context_from_implementation(handle);
   auto device = xrt_core::hw_context_int::get_core_device(context);
+#elif XDP_VE2_BUILD
+  std::cout<<"******** getting hwcontext in updateAIEDevice ************\n";
+  xrt::hw_context context = xrt_core::hw_context_int::create_hw_context_from_implementation(handle);
+  auto device = xrt_core::hw_context_int::get_core_device(context);
 #else
   auto device = xrt_core::get_userpf_device(handle);
 #endif
@@ -128,7 +132,10 @@ void AieTracePluginUnified::updateAIEDevice(void *handle) {
   (db->getStaticInfo()).setDeviceName(deviceID, "win_device");
 #else
   // Update the static database with information from xclbin
-  (db->getStaticInfo()).updateDevice(deviceID, std::move(std::make_unique<HalDevice>(handle)), handle);
+  // (db->getStaticInfo()).updateDevice(deviceID, std::move(std::make_unique<HalDevice>(handle)), handle);
+  xrt::hw_context ctx = xrt_core::hw_context_int::create_hw_context_from_implementation(handle);
+  auto dev = xrt_core::hw_context_int::get_core_device(ctx);
+  (db->getStaticInfo()).updateDevice(deviceID, std::move(std::make_unique<HalDevice>(dev->get_device_handle())), handle);
 #endif
 
   // Metadata depends on static information from the database

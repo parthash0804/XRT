@@ -17,7 +17,7 @@
 
 #include <iostream>
 #include <sstream>
-
+#include "core/common/api/hw_context_int.h"
 #ifdef _WIN32
 #include <process.h>
 #else
@@ -1465,8 +1465,10 @@ namespace xdp {
   //  reload our information.
   void VPStaticDatabase::updateDevice(uint64_t deviceId, std::unique_ptr<xdp::Device> xdpDevice, void* devHandle)
   {
-    std::shared_ptr<xrt_core::device> device =
-      xrt_core::get_userpf_device(devHandle);
+    // std::shared_ptr<xrt_core::device> device =
+    //   xrt_core::get_userpf_device(devHandle);
+    xrt::hw_context context = xrt_core::hw_context_int::create_hw_context_from_implementation(devHandle);
+    auto device = xrt_core::hw_context_int::get_core_device(context);
     if (nullptr == device)
       return;
 

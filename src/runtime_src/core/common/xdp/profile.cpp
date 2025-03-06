@@ -290,14 +290,14 @@ std::function<void (void*)> end_trace_cb;
 void 
 register_callbacks(void* handle)
 {  
-  #ifdef XDP_CLIENT_BUILD
+  // #ifdef XDP_CLIENT_BUILD
     using ftype = void (*)(void*);
 
     end_trace_cb = reinterpret_cast<ftype>(xrt_core::dlsym(handle, "finishFlushAIEDevice"));
     update_device_cb = reinterpret_cast<ftype>(xrt_core::dlsym(handle, "updateAIEDevice"));
-  #else 
-    (void)handle;
-  #endif
+  // #else 
+  //   (void)handle;
+  // #endif
 }
 
 void 
@@ -380,7 +380,7 @@ void
 update_device(void* handle)
 {
 
-#ifdef XDP_CLIENT_BUILD
+// #ifdef XDP_CLIENT_BUILD
   /* Adding the macro guard as the static instances of the following plugins
    * get created unnecessarily when the configs are enabled on Edge.
    */
@@ -467,6 +467,8 @@ update_device(void* handle)
         "Failed to load AIE PC library."); 
     }    
   }
+
+#ifdef XDP_CLIENT_BUILD
 
 #elif defined(XDP_VE2_BUILD)
 

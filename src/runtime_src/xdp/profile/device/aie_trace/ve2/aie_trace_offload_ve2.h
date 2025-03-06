@@ -19,7 +19,9 @@
 #define XDP_PROFILE_AIE_TRACE_OFFLOAD_VE2_H_
 
 #include "xdp/profile/device/tracedefs.h"
-#include "shim/aie/aie.h"
+// #include "shim/aie/aie.h"
+
+#include <atomic>
 
 
 namespace xdp {
@@ -89,7 +91,7 @@ public:
     inline void setOffloadIntervalUs(uint64_t v) { offloadIntervalUs = v; }
 
     inline AIEOffloadThreadStatus getOffloadStatus() {
-      std::lock_guard<std::mutex> lock(statusLock);
+      // std::lock_guard<std::mutex> lock(statusLock);
       return offloadStatus;
     };
 
@@ -97,7 +99,7 @@ public:
 
 private:
 
-    void*           deviceHandle;
+    // void*           deviceHandle;
     uint64_t        deviceId;
     PLDeviceIntf*     deviceIntf;
     AIETraceLogger* traceLogger;
@@ -118,13 +120,14 @@ private:
     bool traceContinuous;
     uint64_t offloadIntervalUs;
     bool bufferInitialized;
-    std::mutex statusLock;
-    AIEOffloadThreadStatus offloadStatus;
+    // std::mutex statusLock;
+    // AIEOffloadThreadStatus offloadStatus;
     std::thread offloadThread;
 
     //Circular Buffer Tracking
     bool mEnCircularBuf;
     bool mCircularBufOverwrite;
+    xrt::hw_context m_hwcontext;
 
 private:
     void readTracePLIO(bool final);
