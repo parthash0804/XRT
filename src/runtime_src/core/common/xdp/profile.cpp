@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023-2025 Advanced Micro Devices, Inc. - All rights reserved
 #define XRT_CORE_COMMON_SOURCE
+
+#include "core/common/api/hw_context_int.h"
+
 #include "core/common/xdp/profile.h"
 
 #include "core/common/config_reader.h"
@@ -30,6 +33,14 @@ namespace {
 // modules.
 
 namespace xrt_core::xdp::core {
+
+  static bool
+  is_ve2_xdna()
+  {
+    static bool value = (std::getenv("VE2_XDNA") != nullptr);
+    return value;
+  }
+
   void
   load_core()
   {
@@ -63,6 +74,14 @@ void
 load()
 {
   static xrt_core::module_loader xdp_aie_loader("xdp_aie_profile_plugin",
+                                                register_callbacks,
+                                                warning_callbacks_empty);
+}
+
+void 
+load_xdna()
+{
+  static xrt_core::module_loader xdp_aie_loader("xdp_aie_profile_plugin_xdna",
                                                 register_callbacks,
                                                 warning_callbacks_empty);
 }
@@ -546,15 +565,94 @@ update_device(void* handle, bool hw_context_flow)
   }
   
   if (xrt_core::config::get_aie_profile()) {
-    try {
-      xrt_core::xdp::aie::profile::load();
-    }
-    catch (...) {
+    if (hw_context_flow) {
       xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
-        "Failed to load AIE Profile library.");
+          "About to enable AIE Profile for HW Ctx Flow.");
+
+      xrt::hw_context hwContext = xrt_core::hw_context_int::create_hw_context_from_implementation(hwCtxImpl);
+      xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+          "Got hw_context_from_implementation.");
+
+      std::shared_ptr<xrt_core::device> coreDevice = xrt_core::hw_context_int::get_core_device(hwContext);
+      xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+          "Got core device.");
+      
+      if (xrt_core::xdp::core::is_ve2_xdna()) {
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "VE2 XDNA is set.")
+
+        if (0 == coreDevice->get_device_id()) {  // Device 0 for xdna(ML) and device 1 for zocl(PL)
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+              "Got XDNA device");
+
+          try {
+            xrt_core::xdp::aie::profile::load_xdna();
+          }
+          catch (...) {
+            xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+                "Failed to load AIE Profile library for VE2 XDNA.");
+          }
+          try {
+            xrt_core::xdp::aie::profile::update_device(handle, hw_context_flow);
+          }
+          catch (...) {
+            xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+                "Update device for AIE Profile VE2 XDNA failed.");
+          }
+        } else if (1 == coreDevice->get_device_id()) { // Device 0 for xdna(ML) and device 1 for zocl(PL)
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+              "Got Non-XDNA device when VE2 XDNA flow is set. AIE Profiling is not yet supported for this combination.");
+        } else {
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "Unexpected. AIE Profiling is not yet supported for this combination.");
+        }
+      } else { // Non XDNA
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "VE2 XDNA is NOT set.")
+
+        if (1 == coreDevice->get_device_id()) { // Device 0 for xdna(ML) and device 1 for zocl(PL)
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+              "Got Non-XDNA device");
+
+          try {
+            xrt_core::xdp::aie::profile::load();
+          }
+          catch (...) {
+            xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+                "Failed to load AIE Profile library for VE2 Non-XDNA.");
+          }
+          try {
+            xrt_core::xdp::aie::profile::update_device(handle, hw_context_flow);
+          }
+          catch (...) {
+            xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+                "Update device for AIE Profile VE2 Non-XDNA failed.");
+          }
+        } else if (0 == coreDevice->get_device_id()) { // Device 0 for xdna(ML) and device 1 for zocl(PL)
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+              "Got XDNA device when VE2 XDNA flow is NOT set. AIE Profiling is not yet supported for this combination.");
+        } else {
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "Unexpected. AIE Profiling is not yet supported for this combination.");
+        }
+      }
+    } else {
+      if (xrt_core::xdp::core::is_ve2_xdna()) {
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+          "XDNA flow set for Non HW Ctx flow. Unexpected. AIE Profiling is not supported.");
+      } else {
+        try {
+          xrt_core::xdp::aie::profile::load();
+        }
+        catch (...) {
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "Failed to load AIE Profile library.");
+        }
+        xrt_core::xdp::aie::profile::update_device(handle, hw_context_flow);       
+      }
     }
-    xrt_core::xdp::aie::profile::update_device(handle, hw_context_flow);
   }
+
   // Avoid warning until we've added support in all plugins
   (void)(hw_context_flow);
 
@@ -607,8 +705,13 @@ finish_flush_device(void* handle)
     xrt_core::xdp::aie::status::end_status(handle);
   if (xrt_core::config::get_ml_timeline())
     xrt_core::xdp::ml_timeline::finish_flush_device(handle);
-  if (xrt_core::config::get_aie_profile())
-    xrt_core::xdp::aie::profile::end_poll(handle);
+
+// Skipping for now, as had seen issue in using "create_hw_context_from_implementation" in destructor
+// Come back to it
+//  if (xrt_core::config::get_aie_profile())
+//    xrt_core::xdp::aie::profile::end_poll(handle);
+
+
 
 #else
 
