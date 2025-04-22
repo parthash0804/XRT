@@ -3,6 +3,7 @@
 #define XRT_CORE_COMMON_SOURCE
 
 #include "core/common/api/hw_context_int.h"
+#include "core/common/device.h"
 
 #include "core/common/xdp/profile.h"
 
@@ -11,6 +12,8 @@
 #include "core/common/module_loader.h"
 #include "core/common/message.h"
 #include <functional>
+
+#define XDP_VE2_BUILD
 
 #ifdef _WIN32
 #pragma warning( disable : 4996 ) /* Disable warning for getenv */
@@ -569,7 +572,7 @@ update_device(void* handle, bool hw_context_flow)
       xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
           "About to enable AIE Profile for HW Ctx Flow.");
 
-      xrt::hw_context hwContext = xrt_core::hw_context_int::create_hw_context_from_implementation(hwCtxImpl);
+      xrt::hw_context hwContext = xrt_core::hw_context_int::create_hw_context_from_implementation(handle);
       xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
           "Got hw_context_from_implementation.");
 
@@ -579,7 +582,7 @@ update_device(void* handle, bool hw_context_flow)
       
       if (xrt_core::xdp::core::is_ve2_xdna()) {
         xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
-            "VE2 XDNA is set.")
+            "VE2 XDNA is set.");
 
         if (0 == coreDevice->get_device_id()) {  // Device 0 for xdna(ML) and device 1 for zocl(PL)
           xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
@@ -608,7 +611,7 @@ update_device(void* handle, bool hw_context_flow)
         }
       } else { // Non XDNA
         xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
-            "VE2 XDNA is NOT set.")
+            "VE2 XDNA is NOT set.");
 
         if (1 == coreDevice->get_device_id()) { // Device 0 for xdna(ML) and device 1 for zocl(PL)
           xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
