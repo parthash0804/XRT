@@ -13,8 +13,6 @@
 #include "core/common/message.h"
 #include <functional>
 
-#define XDP_VE2_BUILD
-
 #ifdef _WIN32
 #pragma warning( disable : 4996 ) /* Disable warning for getenv */
 #endif
