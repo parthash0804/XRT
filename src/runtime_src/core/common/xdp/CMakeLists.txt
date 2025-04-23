@@ -18,10 +18,8 @@ if (XRT_NPU)
     XDP_CLIENT_BUILD=1
     )
 
-# For X or ML POC, enable the plugins for edge flow too.
-# TO DO: Need to skip this for vck190 edge, alveo  
-#elseif (XDP_VE2_BUILD_CMAKE STREQUAL "yes")
-else()
+elseif (XDP_VE2_BUILD_CMAKE STREQUAL "yes")
+#else()
   
   target_compile_definitions(core_common_xdp_profile_objects
     PRIVATE
