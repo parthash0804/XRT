@@ -716,7 +716,7 @@ finish_flush_device(void* handle)
 //  if (xrt_core::config::get_aie_profile())
 //    xrt_core::xdp::aie::profile::end_poll(handle);
 
-if (xrt_core::config::get_aie_profile()) {
+  if (xrt_core::config::get_aie_profile()) {
     xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
         "FINISH : About to enable AIE Profile for HW Ctx Flow.");
 
@@ -776,7 +776,6 @@ if (xrt_core::config::get_aie_profile()) {
       }
     }
   } 
-}
 
 #else
 
