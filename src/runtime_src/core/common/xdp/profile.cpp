@@ -716,7 +716,67 @@ finish_flush_device(void* handle)
 //  if (xrt_core::config::get_aie_profile())
 //    xrt_core::xdp::aie::profile::end_poll(handle);
 
+if (xrt_core::config::get_aie_profile()) {
+    xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+        "FINISH : About to enable AIE Profile for HW Ctx Flow.");
 
+    xrt::hw_context hwContext = xrt_core::hw_context_int::create_hw_context_from_implementation(handle);
+    xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+        "FINISH : Got hw_context_from_implementation.");
+
+    std::shared_ptr<xrt_core::device> coreDevice = xrt_core::hw_context_int::get_core_device(hwContext);
+    xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+        "FINISH : Got core device.");
+    
+    if (xrt_core::xdp::core::is_ve2_xdna()) {
+      xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+          "FINISH :VE2 XDNA is set.");
+
+      if (0 == coreDevice->get_device_id()) {  // Device 0 for xdna(ML) and device 1 for zocl(PL)
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "FINISH : Got XDNA device");
+
+        try {
+          xrt_core::xdp::aie::profile::end_poll(handle);
+        }
+        catch (...) {
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+              "FINISH : Failed for VE2 XDNA.");
+        }
+
+      } else if (1 == coreDevice->get_device_id()) { // Device 0 for xdna(ML) and device 1 for zocl(PL)
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "FINISH : Got Non-XDNA device when VE2 XDNA flow is set. AIE Profiling is not yet supported for this combination.");
+      } else {
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+          "FINISH : Unexpected. AIE Profiling is not yet supported for this combination.");
+      }
+    } else { // Non XDNA
+      xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+          "FINISH : VE2 XDNA is NOT set.");
+
+      if (1 == coreDevice->get_device_id()) { // Device 0 for xdna(ML) and device 1 for zocl(PL)
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "FINISH : Got Non-XDNA device");
+
+        try {
+          xrt_core::xdp::aie::profile::end_poll(handle);
+        }
+        catch (...) {
+          xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+              "FINISH : Failed for VE2 Non-XDNA.");
+        }
+
+      } else if (0 == coreDevice->get_device_id()) { // Device 0 for xdna(ML) and device 1 for zocl(PL)
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+            "FINISH : Got XDNA device when VE2 XDNA flow is NOT set. AIE Profiling is not yet supported for this combination.");
+      } else {
+        xrt_core::message::send(xrt_core::message::severity_level::debug, "XRT",
+          "FINISH : Unexpected. AIE Profiling is not yet supported for this combination.");
+      }
+    }
+  } 
+}
 
 #else
 
