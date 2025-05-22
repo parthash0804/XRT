@@ -441,6 +441,35 @@ namespace xdp::aie {
     return infoPt;
   }
 
+  /****************************************************************************
+   * Get most recent AIE partition information which corresponds to the
+   * most recent hw_context
+   ****************************************************************************/
+  std::unordered_map<std::string, uint64_t>
+  getLatestAIEPartitionInfo(void* handle, bool isHwCtxImpl)
+  {
+    std::unordered_map<std::string, uint64_t> latestAIEPartitionInfo;
+    std::shared_ptr<xrt_core::device> device;
+    try {
+      if (isHwCtxImpl) {
+        xrt::hw_context context = xrt_core::hw_context_int::create_hw_context_from_implementation(handle);
+        device = xrt_core::hw_context_int::get_core_device(context);
+      } else {
+        device = xrt_core::get_userpf_device(handle);
+      }
+  
+      auto info = xrt_core::device_query_default<xrt_core::query::aie_partition_info>(device.get(), {});
+      //Get the last entry which corresponds to the most recent hw_context
+      latestAIEPartitionInfo["start_col"] = info.back().start_col;
+      latestAIEPartitionInfo["num_cols"] = info.back().num_cols;
+    }
+    catch(...) {
+      xrt_core::message::send(severity_level::info, "XRT", "Could not retrieve AIE Partition Info.");
+      return latestAIEPartitionInfo;
+    }
+    return latestAIEPartitionInfo;
+  }
+
   void displayColShiftInfo(uint8_t colShift)
   {
     static bool displayed = false;

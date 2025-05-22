@@ -117,6 +117,10 @@ namespace xdp::aie {
   getAIEPartitionInfo(void* handle, bool isHwCtxImpl = true);
 
   XDP_CORE_EXPORT
+  std::unordered_map<std::string, uint64_t>
+  getLatestAIEPartitionInfo(void* handle, bool isHwCtxImpl = true);
+
+  XDP_CORE_EXPORT
   void displayColShiftInfo(uint8_t colShift);
 
   XDP_CORE_EXPORT

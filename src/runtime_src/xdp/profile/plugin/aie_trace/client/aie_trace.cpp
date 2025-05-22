@@ -98,11 +98,11 @@ namespace xdp {
 
 
   void AieTrace_WinImpl::build2ChannelBroadcastNetwork(void *hwCtxImpl, uint8_t broadcastId1, uint8_t broadcastId2, XAie_Events event) {
-
-    boost::property_tree::ptree aiePartitionPt = xdp::aie::getAIEPartitionInfo(hwCtxImpl);
-    // Currently, assuming only one Hw Context is alive at a time
-    uint8_t startCol = static_cast<uint8_t>(aiePartitionPt.front().second.get<uint64_t>("start_col"));
-    uint8_t numCols  = static_cast<uint8_t>(aiePartitionPt.front().second.get<uint64_t>("num_cols"));
+    
+    // Getting the partition info of the most recent hw_context
+    auto aiePartitionInfo = xdp::aie::getLatestAIEPartitionInfo(hwCtxImpl);
+    uint8_t startCol = static_cast<uint8_t>(aiePartitionInfo["start_col"]);
+    uint8_t numCols  = static_cast<uint8_t>(aiePartitionInfo["num_cols"]);
 
     std::vector<uint8_t> maxRowAtCol(startCol + numCols, 0);
     for (auto& tileMetric : metadata->getConfigMetrics()) {
@@ -168,10 +168,10 @@ namespace xdp {
 
   void AieTrace_WinImpl::reset2ChannelBroadcastNetwork(void *hwCtxImpl, uint8_t broadcastId1, uint8_t broadcastId2) {
 
-    boost::property_tree::ptree aiePartitionPt = xdp::aie::getAIEPartitionInfo(hwCtxImpl);
-    // Currently, assuming only one Hw Context is alive at a time
-    uint8_t startCol = static_cast<uint8_t>(aiePartitionPt.front().second.get<uint64_t>("start_col"));
-    uint8_t numCols  = static_cast<uint8_t>(aiePartitionPt.front().second.get<uint64_t>("num_cols"));
+    // Getting the partition info of the most recent hw_context
+    auto aiePartitionInfo = xdp::aie::getLatestAIEPartitionInfo(hwCtxImpl);
+    uint8_t startCol = static_cast<uint8_t>(aiePartitionInfo["start_col"]);
+    uint8_t numCols  = static_cast<uint8_t>(aiePartitionInfo["num_cols"]);
 
     std::vector<uint8_t> maxRowAtCol(startCol + numCols, 0);
     for (auto& tileMetric : metadata->getConfigMetrics()) {
@@ -209,9 +209,9 @@ namespace xdp {
     //Start recording the transaction
     XAie_StartTransaction(&aieDevInst, XAIE_TRANSACTION_DISABLE_AUTO_FLUSH);
 
-    boost::property_tree::ptree aiePartitionPt = xdp::aie::getAIEPartitionInfo(hwCtxImpl);
-    // Currently, assuming only one Hw Context is alive at a time
-    uint8_t startCol = static_cast<uint8_t>(aiePartitionPt.front().second.get<uint64_t>("start_col"));
+    // Getting the partition info of the most recent hw_context
+    auto aiePartitionInfo = xdp::aie::getLatestAIEPartitionInfo(hwCtxImpl);
+    uint8_t startCol = static_cast<uint8_t>(aiePartitionInfo["start_col"]);
 
     XAie_Events bcastEvent2_PL = (XAie_Events) (XAIE_EVENT_BROADCAST_A_0_PL + traceStartBroadcastChId2);
     XAie_Events shimTraceStartEvent = bcastEvent2_PL;
@@ -931,10 +931,9 @@ namespace xdp {
   {
     (void)deviceId;
 
-    // Get partition columns
-    boost::property_tree::ptree aiePartitionPt = xdp::aie::getAIEPartitionInfo(hwCtxImpl);
-    // Currently, assuming only one Hw Context is alive at a time
-    uint8_t startCol = static_cast<uint8_t>(aiePartitionPt.front().second.get<uint64_t>("start_col"));
+    // Getting the partition info of the most recent hw_context
+    auto aiePartitionInfo = xdp::aie::getLatestAIEPartitionInfo(hwCtxImpl);
+    uint8_t startCol = static_cast<uint8_t>(aiePartitionInfo["start_col"]);
 
     std::string startType = xrt_core::config::get_aie_trace_settings_start_type();
     unsigned int startLayer = xrt_core::config::get_aie_trace_settings_start_layer();
