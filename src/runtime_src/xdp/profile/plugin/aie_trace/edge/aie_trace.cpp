@@ -48,8 +48,8 @@
 namespace {
   static void* fetchAieDevInst(void* devHandle)
   {
-    if(xdp::VPDatabase::Instance()->getStaticInfo().getAppFlowType() == 
-       xdp::AppFlowType::LOAD_XCLBIN_FLOW) {
+    if(xdp::VPDatabase::Instance()->getStaticInfo().getAppStyle() == 
+       xdp::AppStyle::LOAD_XCLBIN_STYLE) {
       auto drv = ZYNQ::shim::handleCheck(devHandle);
       if (!drv)
         return nullptr;
