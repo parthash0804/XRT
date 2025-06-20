@@ -99,9 +99,9 @@ uint64_t AieTracePluginUnified::getDeviceIDFromHandle(void *handle, bool hw_cont
   return db->addDevice("win_sysfspath");
 #else
   if(hw_context_flow)
-    return db->addDevice("ve2_device");
+    return db->addDevice("versal_device");  // This will hit for both VE2 and Edge hw_context flow
   else
-    return db->addDevice(util::getDebugIpLayoutPath(handle)); // Get the unique device Id
+    return db->addDevice(util::getDebugIpLayoutPath(handle)); // Get the unique device Id. This will hit for Edge load device flow.
 #endif
 }
 
