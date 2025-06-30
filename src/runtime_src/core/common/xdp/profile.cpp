@@ -646,10 +646,10 @@ finish_flush_device(void* handle)
       && nullptr == std::getenv("XCL_EMULATION_MODE")) {
     xrt_core::xdp::pl_deadlock::finish_flush_device(handle);
   }
-  if (xrt_core::config::get_aie_profile())
-    xrt_core::xdp::aie::profile::end_poll(handle);
   if (xrt_core::config::get_aie_trace())
     xrt_core::xdp::aie::trace::end_trace(handle);
+  if (xrt_core::config::get_aie_profile())
+    xrt_core::xdp::aie::profile::end_poll(handle);
 #endif
 }
 

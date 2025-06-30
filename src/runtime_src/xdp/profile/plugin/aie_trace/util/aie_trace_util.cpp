@@ -803,6 +803,19 @@ namespace xdp::aie::trace {
   }
 
   XAie_DevInst* getAieDevInst(void* devHandle, bool hw_context_flow) {
+#ifdef XDP_VE2_BUILD
+    (void)(hw_context_flow);
+    xrt::hw_context context = xrt_core::hw_context_int::create_hw_context_from_implementation(devHandle);
+    auto hwctx_hdl = static_cast<xrt_core::hwctx_handle*>(context);
+    auto hwctx_obj = dynamic_cast<shim_xdna_edge::xdna_hwctx*>(hwctx_hdl);
+    if(!hwctx_obj)
+      return nullptr;
+    auto aieArray = hwctx_obj->get_aie_array();
+    if(!aieArray)
+      return nullptr;
+    return aieArray->get_dev();
+#else if ! defined (XDP_CLIENT_BUILD) && ! defined (XRT_X86_BUILD)
+    //For Edge Flow
     if(!hw_context_flow) {
       auto drv = ZYNQ::shim::handleCheck(devHandle);
       if (!drv)
@@ -815,16 +828,6 @@ namespace xdp::aie::trace {
     else {
       xrt::hw_context context = xrt_core::hw_context_int::create_hw_context_from_implementation(devHandle);
       auto hwctx_hdl = static_cast<xrt_core::hwctx_handle*>(context);
-    
-    #ifdef XDP_VE2_BUILD
-      auto hwctx_obj = dynamic_cast<shim_xdna_edge::xdna_hwctx*>(hwctx_hdl);
-      if(!hwctx_obj)
-        return nullptr;
-      auto aieArray = hwctx_obj->get_aie_array();
-      if(!aieArray)
-        return nullptr;
-      return aieArray->get_dev();
-    #else
       auto hwctx_obj = dynamic_cast<zynqaie::hwctx_object*>(hwctx_hdl);
       if(!hwctx_obj)
         return nullptr;
@@ -832,8 +835,8 @@ namespace xdp::aie::trace {
       if(!aieArray)
         return nullptr;
       return aieArray->get_dev();
-    #endif
     }
   }
+#endif
 
 } // namespace xdp::aie::trace
