@@ -391,6 +391,9 @@ namespace xdp {
         }
 
         uint32_t threshold = 0;
+        bool overflowCountersConfigured = false;
+        std::vector<std::shared_ptr<xaiefal::XAiePerfCounter>> tempCounters;
+        
         // Request and configure all available counters for this tile
         for (int i=0; i < numFreeCtr; ++i) {
           auto startEvent    = startEvents.at(i);
@@ -434,6 +437,83 @@ namespace xdp {
           }
           if (!perfCounter)
             continue;
+          
+          tempCounters.push_back(perfCounter);
+          
+          // For shim tile throughput metrics, check if first two counters are 0 and 1
+          if ((type == module_type::shim) && ((metricSet == "input_throughputs") || (metricSet == "output_throughputs")) &&
+              (tempCounters.size() == 2) && !overflowCountersConfigured) {
+            // Check if the reserved counters are actually counters 0 and 1
+            uint32_t counterId0 = 0, counterId1 = 0;
+            XAie_LocType loc0, loc1;
+            XAie_ModuleType mod0, mod1;
+            
+            auto ret0 = tempCounters[0]->getRscId(loc0, mod0, counterId0);
+            auto ret1 = tempCounters[1]->getRscId(loc1, mod1, counterId1);
+            
+            if ((ret0 == XAIE_OK) && (ret1 == XAIE_OK) && (counterId0 == 0) && (counterId1 == 1)) {
+              // Counters 0 and 1 are reserved - configure overflow counting
+              // Set threshold to 0xFFFFFFFF for counters 0 and 1
+              XAie_PerfCounterEventValueSet(aieDevInst, loc, mod, 0, 0xFFFFFFFF);
+              XAie_PerfCounterEventValueSet(aieDevInst, loc, mod, 1, 0xFFFFFFFF);
+              
+              // Check if counters 2 and 3 are available for overflow counting
+              auto numFreeCtrRemaining = stats.getNumRsc(loc, mod, xaiefal::XAIE_PERFCOUNT);
+              if (numFreeCtrRemaining >= 2) {
+                // Configure counter 2 to count overflow events from counter 0
+                auto overflowCounter2 = xaieModule.perfCounter();
+                auto ret2 = overflowCounter2->initialize(mod, XAIE_EVENT_PERF_CNT_0_PL, mod, XAIE_EVENT_PERF_CNT_0_PL);
+                if (ret2 == XAIE_OK) {
+                  ret2 = overflowCounter2->reserve();
+                  if (ret2 == XAIE_OK) {
+                    ret2 = overflowCounter2->start();
+                    if (ret2 == XAIE_OK) {
+                      // Configure counter 3 to count overflow events from counter 1
+                      auto overflowCounter3 = xaieModule.perfCounter();
+                      auto ret3 = overflowCounter3->initialize(mod, XAIE_EVENT_PERF_CNT_1_PL, mod, XAIE_EVENT_PERF_CNT_1_PL);
+                      if (ret3 == XAIE_OK) {
+                        ret3 = overflowCounter3->reserve();
+                        if (ret3 == XAIE_OK) {
+                          ret3 = overflowCounter3->start();
+                          if (ret3 == XAIE_OK) {
+                            // Successfully configured both overflow counters
+                            tile_type recordTile;
+                            recordTile.col = col;
+                            recordTile.row = row;
+                            overflowCounters[std::make_pair(recordTile, metricSet)] = 
+                                std::make_pair(overflowCounter2, overflowCounter3);
+                            
+                            overflowCountersConfigured = true;
+                            
+                            std::stringstream overflowMsg;
+                            overflowMsg << "Configured overflow counters for (" 
+                                        << +col << "," << +row << ") metric set " << metricSet << ".";
+                            xrt_core::message::send(severity_level::debug, "XRT", overflowMsg.str());
+                          } else {
+                            overflowCounter3->release();
+                            overflowCounter2->stop();
+                            overflowCounter2->release();
+                          }
+                        } else {
+                          overflowCounter3->release();
+                          overflowCounter2->stop();
+                          overflowCounter2->release();
+                        }
+                      } else {
+                        overflowCounter2->stop();
+                        overflowCounter2->release();
+                      }
+                    } else {
+                      overflowCounter2->release();
+                    }
+                  } else {
+                    overflowCounter2->release();
+                  }
+                }
+              }
+            }
+          }
+          
           perfCounters.push_back(perfCounter);
 
           // Generate user_event_1 for byte count metric set after configuration
@@ -540,6 +620,9 @@ namespace xdp {
 
       // Read counter value from device
       uint32_t counterValue;
+      uint64_t totalValue = 0;
+      bool hasOverflow = false;
+      
       if (perfCounters.empty()) {
         // Compiler-defined counters
         XAie_LocType tileLocation = XAie_TileLoc(aie->column, aie->row);
@@ -584,9 +667,42 @@ namespace xdp {
         else {
           auto perfCounter = perfCounters.at(c);
           perfCounter->readResult(counterValue);
+          
+          // Check for overflow counters for shim tile throughput metrics
+          auto moduleType = aie::getModuleType(aie->row, metadata->getAIETileRowOffset());
+          if ((moduleType == module_type::shim) && ((aie->counterNumber == 0) || (aie->counterNumber == 1))) {
+              // Find matching overflow counter entry
+              tile_type lookupTile;
+              lookupTile.col = aie->column;
+              lookupTile.row = aie->row;
+              
+              // Check both input_throughputs and output_throughputs
+              for (const auto& metricSetName : {"input_throughputs", "output_throughputs"}) {
+                auto overflowIt = overflowCounters.find(std::make_pair(lookupTile, metricSetName));
+                if (overflowIt != overflowCounters.end()) {
+                  uint32_t overflowCount = 0;
+                  if (aie->counterNumber == 0) {
+                    // Read overflow counter 2 (counts overflows from counter 0)
+                    overflowIt->second.first->readResult(overflowCount);
+                  } else if (aie->counterNumber == 1) {
+                    // Read overflow counter 3 (counts overflows from counter 1)
+                    overflowIt->second.second->readResult(overflowCount);
+                  }
+                  
+                  // Combine main counter with overflow count
+                  // total = main_counter + (overflow_count * 0xFFFFFFFF)
+                  totalValue = static_cast<uint64_t>(counterValue) + 
+                               (static_cast<uint64_t>(overflowCount) * 0xFFFFFFFFULL);
+                  hasOverflow = true;
+                  break;
+                }
+              }
+          }
         }
       }
-      values.push_back(counterValue);
+      
+      // Push 64-bit value to vector (cast if no overflow)
+      values.push_back(hasOverflow ? totalValue : static_cast<uint64_t>(counterValue));
 
       // Read tile timer (once per tile to minimize overhead)
       if ((aie->column != prevColumn) || (aie->row != prevRow)) {
@@ -667,6 +783,19 @@ namespace xdp {
       bc->stop();
       bc->release();
     }
+
+    // Clean up overflow counters
+    for (auto& overflowPair : overflowCounters) {
+      if (overflowPair.second.first) {
+        overflowPair.second.first->stop();
+        overflowPair.second.first->release();
+      }
+      if (overflowPair.second.second) {
+        overflowPair.second.second->stop();
+        overflowPair.second.second->release();
+      }
+    }
+    overflowCounters.clear();
   }
 
   /****************************************************************************
