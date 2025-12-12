@@ -84,15 +84,60 @@ namespace xdp::aie::profile {
           // NOTE: skip configuration of extra ports for tile if stream_ids are not available.
           if (portnum >= tile.stream_ids.size())
             continue;
-          // Grab slave/master and stream ID
+          
+          uint8_t streamPortId;
           auto slaveOrMaster = (tile.is_master_vec.at(portnum) == 0) ? XAIE_STRMSW_SLAVE : XAIE_STRMSW_MASTER;
-          uint8_t streamPortId = static_cast<uint8_t>(tile.stream_ids.at(portnum));
+          
+          // For GMIO, use channel number from xrt.ini to find corresponding stream port ID
+          if (tile.subtype == io_type::GMIO) {
+            // Find the stream_id that corresponds to the channel number
+            // For output_throughputs (master/S2MM), check s2mm_names
+            // For input_throughputs (slave/MM2S), check mm2s_names
+            bool foundStreamId = false;
+            std::string targetPortName;
+            
+            if (slaveOrMaster == XAIE_STRMSW_MASTER) {
+              // Output port - check s2mm_names
+              if (channel < tile.s2mm_names.size() && tile.s2mm_names[channel] != "unused") {
+                targetPortName = tile.s2mm_names[channel];
+              }
+            } else {
+              // Input port - check mm2s_names
+              if (channel < tile.mm2s_names.size() && tile.mm2s_names[channel] != "unused") {
+                targetPortName = tile.mm2s_names[channel];
+              }
+            }
+            
+            // Find stream_id that matches the port name
+            if (!targetPortName.empty()) {
+              for (size_t idx = 0; idx < tile.stream_ids.size(); ++idx) {
+                uint8_t sid = tile.stream_ids[idx];
+                if (sid < tile.port_names.size() && tile.port_names[sid] == targetPortName) {
+                  streamPortId = sid;
+                  foundStreamId = true;
+                  break;
+                }
+              }
+            }
+            
+            // Fallback to original behavior if channel-based lookup fails
+            if (!foundStreamId) {
+              streamPortId = static_cast<uint8_t>(tile.stream_ids.at(portnum));
+            }
+          } else {
+            // For PLIO, use original behavior (index by portnum)
+            streamPortId = static_cast<uint8_t>(tile.stream_ids.at(portnum));
+          }
+          
           switchPortRsc->setPortToSelect(slaveOrMaster, SOUTH, streamPortId);
 
           if (aie::isDebugVerbosity()) {
             std::string typeName = (tile.is_master_vec.at(portnum) == 0) ? "slave" : "master";
             std::string msg = "Configuring interface tile stream switch to monitor " 
                             + typeName + " stream port " + std::to_string(streamPortId);
+            if (tile.subtype == io_type::GMIO) {
+              msg += " (channel " + std::to_string(channel) + ")";
+            }
             xrt_core::message::send(severity_level::debug, "XRT", msg);
           }
         }
