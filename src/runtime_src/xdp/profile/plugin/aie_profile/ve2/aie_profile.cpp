@@ -20,6 +20,9 @@
 #include <memory>
 #include <cstring>
 #include <map>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 #include "core/common/message.h"
 #include "core/common/time.h"
@@ -283,6 +286,64 @@ namespace xdp {
       if (compilerOptions.enable_multi_layer) {
         aie::timerSynchronization(aieDevInst, aieDevice, startCol, numCols, numRows,
                                   metadata->getAIETileRowOffset());
+        
+        // After timer synchronization, read timer values and dump to files
+        uint8_t rowOffset = metadata->getAIETileRowOffset();
+        
+        // Task 1: Read the same tile timer value 100 times in a loop and dump to a file
+        // Use the first tile (startCol, 0) as the reference tile
+        uint8_t refCol = startCol;
+        uint8_t refRow = 0;
+        auto refTileLoc = XAie_TileLoc(refCol, refRow);
+        auto refModuleType = aie::getModuleType(refRow, rowOffset);
+        XAie_ModuleType refFalModuleType = (refModuleType == module_type::core) ? XAIE_CORE_MOD 
+                                         : ((refModuleType == module_type::shim) ? XAIE_PL_MOD 
+                                         : XAIE_MEM_MOD);
+        
+        std::ofstream sameTileFile("aie_timer_same_tile_reads.txt");
+        if (sameTileFile.is_open()) {
+          sameTileFile << "Reading tile timer at (" << +refCol << "," << +refRow << ") 100 times\n";
+          sameTileFile << "Module Type: " << ((refModuleType == module_type::core) ? "CORE" 
+                                             : ((refModuleType == module_type::shim) ? "PL" : "MEM")) << "\n";
+          sameTileFile << "Iteration,Timer Value\n";
+          
+          for (int i = 0; i < 100; i++) {
+            uint64_t timerValue = 0;
+            XAie_ReadTimer(aieDevInst, refTileLoc, refFalModuleType, &timerValue);
+            sameTileFile << i << "," << timerValue << "\n";
+          }
+          sameTileFile.close();
+          xrt_core::message::send(severity_level::info, "XRT", 
+            "Dumped 100 timer reads from tile (" + std::to_string(+refCol) + "," + std::to_string(+refRow) + ") to aie_timer_same_tile_reads.txt");
+        }
+        
+        // Task 2: Read all tiles timers in a loop and dump to another file
+        std::ofstream allTilesFile("aie_timer_all_tiles_reads.txt");
+        if (allTilesFile.is_open()) {
+          allTilesFile << "Reading timer values from all tiles in partition\n";
+          allTilesFile << "Partition: startCol=" << +startCol << ", numCols=" << +numCols << ", numRows=" << +numRows << "\n";
+          allTilesFile << "Column,Row,Module Type,Timer Value\n";
+          
+          for (uint8_t col = startCol; col < startCol + numCols; col++) {
+            for (uint8_t row = 0; row < numRows; row++) {
+              auto tileLoc = XAie_TileLoc(col, row);
+              auto moduleType = aie::getModuleType(row, rowOffset);
+              XAie_ModuleType falModuleType = (moduleType == module_type::core) ? XAIE_CORE_MOD 
+                                            : ((moduleType == module_type::shim) ? XAIE_PL_MOD 
+                                            : XAIE_MEM_MOD);
+              
+              uint64_t timerValue = 0;
+              XAie_ReadTimer(aieDevInst, tileLoc, falModuleType, &timerValue);
+              
+              std::string moduleTypeStr = (moduleType == module_type::core) ? "CORE" 
+                                        : ((moduleType == module_type::shim) ? "PL" : "MEM");
+              allTilesFile << +col << "," << +row << "," << moduleTypeStr << "," << timerValue << "\n";
+            }
+          }
+          allTilesFile.close();
+          xrt_core::message::send(severity_level::info, "XRT", 
+            "Dumped timer reads from all tiles to aie_timer_all_tiles_reads.txt");
+        }
       }
     }
 
