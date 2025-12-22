@@ -448,7 +448,8 @@ namespace xdp {
     std::shared_ptr<xaiefal::XAieBroadcast> traceStartBroadcastCh1 = nullptr, traceStartBroadcastCh2 = nullptr;
     if(compilerOptions.enable_multi_layer) {
 
-      aie::trace::timerSyncronization(aieDevInst,aieDevice, metadata, startCol, numCols, numRows);
+      aie::timerSynchronization(aieDevInst, aieDevice, startCol, numCols, numRows,
+                                 metadata->getRowOffset());
       if(xrt_core::config::get_aie_trace_settings_trace_start_broadcast()
          && xrt_core::config::get_aie_trace_settings_start_type() != "layer")
       {

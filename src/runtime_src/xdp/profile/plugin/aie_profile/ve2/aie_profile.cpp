@@ -271,6 +271,21 @@ namespace xdp {
     uint8_t startColShift = metadata->getPartitionOverlayStartCols().front();
     aie::displayColShiftInfo(startColShift);
 
+    // Get partition info and check for timer synchronization
+    boost::property_tree::ptree aiePartitionPt = xdp::aie::getAIEPartitionInfo(handle);
+    uint8_t startCol = static_cast<uint8_t>(aiePartitionPt.back().second.get<uint64_t>("start_col"));
+    uint8_t numCols = static_cast<uint8_t>(aiePartitionPt.back().second.get<uint64_t>("num_cols"));
+
+    auto metadataReader = (VPDatabase::Instance()->getStaticInfo()).getAIEmetadataReader(deviceId);
+    if (metadataReader) {
+      auto compilerOptions = metadataReader->getAIECompilerOptions();
+      uint8_t numRows = metadataReader->getNumRows();
+      if (compilerOptions.enable_multi_layer) {
+        aie::timerSynchronization(aieDevInst, aieDevice, startCol, numCols, numRows,
+                                  metadata->getAIETileRowOffset());
+      }
+    }
+
     for (int module = 0; module < metadata->getNumModules(); ++module) {
       auto configMetrics = metadata->getConfigMetricsVec(module);
       if (configMetrics.empty())

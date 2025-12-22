@@ -7,12 +7,18 @@
 #include <cstdint>
 #include <string>
 #include <set>
+#include <memory>
 #include "xdp/profile/database/static_info/aie_constructs.h"
 #include "xdp/profile/plugin/aie_base/generations/aie_generations.h"
 
 extern "C" {
 #include <xaiengine.h>
 #include <xaiengine/xaiegbl_params.h>
+}
+
+// Forward declarations
+namespace xaiefal {
+  class XAieDev;
 }
 
 namespace xdp::aie {
@@ -405,6 +411,49 @@ namespace xdp::aie {
        return -1;
      }
    }
+
+  /**
+   * @brief Build 2-channel broadcast network for timer synchronization
+   * @param aieDevInst AIE device instance
+   * @param broadcastId1 Broadcast channel 1 ID
+   * @param broadcastId2 Broadcast channel 2 ID
+   * @param event Event to trigger broadcast network
+   * @param startCol Start column of the partition
+   * @param numCols Number of columns in the partition
+   * @param numRows Number of rows
+   * @param rowOffset Row offset for determining module type
+   */
+  void build2ChannelBroadcastNetwork(XAie_DevInst* aieDevInst, uint8_t broadcastId1,
+                                     uint8_t broadcastId2, XAie_Events event,
+                                     uint8_t startCol, uint8_t numCols, uint8_t numRows,
+                                     uint8_t rowOffset);
+
+  /**
+   * @brief Reset 2-channel broadcast network for timer synchronization
+   * @param aieDevInst AIE device instance
+   * @param broadcastId1 Broadcast channel 1 ID
+   * @param broadcastId2 Broadcast channel 2 ID
+   * @param startCol Start column of the partition
+   * @param numCols Number of columns in the partition
+   * @param numRows Number of rows
+   * @param rowOffset Row offset for determining module type
+   */
+  void reset2ChannelBroadcastNetwork(XAie_DevInst* aieDevInst, uint8_t broadcastId1,
+                                     uint8_t broadcastId2, uint8_t startCol,
+                                     uint8_t numCols, uint8_t numRows, uint8_t rowOffset);
+
+  /**
+   * @brief Synchronize timers across all tiles in the partition
+   * @param aieDevInst AIE device instance
+   * @param aieDevice AIE device (FAL)
+   * @param startCol Start column of the partition
+   * @param numCols Number of columns in the partition
+   * @param numRows Number of rows
+   * @param rowOffset Row offset for determining module type
+   */
+  void timerSynchronization(XAie_DevInst* aieDevInst, xaiefal::XAieDev* aieDevice,
+                            uint8_t startCol, uint8_t numCols, uint8_t numRows,
+                            uint8_t rowOffset);
 
 }  // namespace xdp::aie
 

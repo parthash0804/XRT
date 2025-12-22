@@ -74,19 +74,6 @@ namespace xdp::aie::trace {
    */
   bool configStartIteration(xaiefal::XAieMod& core, uint32_t iteration,
                             XAie_Events& startEvent);
-  
-  /**
-   * @brief Reset timers for specified tile range
-   * @param aieDevInst     AIE device Instance
-   * @param aieDevice      AIE device
-   * @param metadata       Trace Metadata
-   * @param startCol       Start column of the partition
-   * @param numCols        Num of columns in the partition
-   * @param numRows        Num of Rows
-   */
-  void timerSyncronization(XAie_DevInst* aieDevInst, xaiefal::XAieDev* aieDevice,
-                           std::shared_ptr<AieTraceMetadata> metadata, uint8_t startCol, 
-                           uint8_t numCols, uint8_t numRows);
 }  // namespace xdp::aie::trace
 
 #endif
